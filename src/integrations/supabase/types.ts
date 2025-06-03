@@ -9,7 +9,141 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      admins: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      configuracoes: {
+        Row: {
+          ativo: boolean | null
+          created_at: string
+          id: string
+          label: string
+          ordem: number | null
+          tipo: string
+          updated_at: string
+          valor: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string
+          id?: string
+          label: string
+          ordem?: number | null
+          tipo: string
+          updated_at?: string
+          valor: string
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string
+          id?: string
+          label?: string
+          ordem?: number | null
+          tipo?: string
+          updated_at?: string
+          valor?: string
+        }
+        Relationships: []
+      }
+      formularios_contato: {
+        Row: {
+          cpf: string
+          created_at: string
+          data_evento: string
+          endereco: string
+          endereco_evento: string
+          horario: string
+          id: string
+          nome_completo: string
+          observacoes: string | null
+          quantidade_adultos: number
+          quantidade_criancas: number | null
+          status: string | null
+          telefone: string
+        }
+        Insert: {
+          cpf: string
+          created_at?: string
+          data_evento: string
+          endereco: string
+          endereco_evento: string
+          horario: string
+          id?: string
+          nome_completo: string
+          observacoes?: string | null
+          quantidade_adultos: number
+          quantidade_criancas?: number | null
+          status?: string | null
+          telefone: string
+        }
+        Update: {
+          cpf?: string
+          created_at?: string
+          data_evento?: string
+          endereco?: string
+          endereco_evento?: string
+          horario?: string
+          id?: string
+          nome_completo?: string
+          observacoes?: string | null
+          quantidade_adultos?: number
+          quantidade_criancas?: number | null
+          status?: string | null
+          telefone?: string
+        }
+        Relationships: []
+      }
+      pizzas: {
+        Row: {
+          ativo: boolean | null
+          created_at: string
+          id: string
+          imagem_url: string | null
+          ingredientes: string
+          nome: string
+          ordem: number | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          ingredientes: string
+          nome: string
+          ordem?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          ingredientes?: string
+          nome?: string
+          ordem?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

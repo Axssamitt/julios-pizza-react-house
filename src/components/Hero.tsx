@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Phone, MapPin, Clock } from 'lucide-react';
+import { MapPin, Clock, Utensils } from 'lucide-react';
 
 export const Hero = () => {
   return (
@@ -25,10 +25,7 @@ export const Hero = () => {
             
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
               <Button size="lg" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 text-lg">
-                <Phone className="mr-2" size={20} />
-                Fazer Pedido
-              </Button>
-              <Button variant="outline" size="lg" className="border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white px-8 py-4 text-lg">
+                <Utensils className="mr-2" size={20} />
                 Ver Cardápio
               </Button>
             </div>
@@ -44,7 +41,7 @@ export const Hero = () => {
                 <span className="text-gray-300">18:00 - 23:00</span>
               </div>
               <div className="flex items-center justify-center lg:justify-start space-x-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <Phone className="text-orange-400" size={24} />
+                <Utensils className="text-orange-400" size={24} />
                 <span className="text-gray-300">Delivery Grátis</span>
               </div>
             </div>

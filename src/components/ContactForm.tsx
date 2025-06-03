@@ -1,50 +1,82 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Phone, Mail, MapPin, Clock, Send } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
+import { Phone, Mail, MapPin, Calendar, Clock, Users, User, Home } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const ContactForm = () => {
   const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    nome: '',
-    sobrenome: '',
-    email: '',
+    nome_completo: '',
+    cpf: '',
+    endereco: '',
+    endereco_evento: '',
+    data_evento: '',
+    horario: '',
+    quantidade_adultos: '',
+    quantidade_criancas: '',
     telefone: '',
-    mensagem: ''
+    observacoes: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setLoading(true);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const { error } = await supabase
+        .from('formularios_contato')
+        .insert([{
+          nome_completo: formData.nome_completo,
+          cpf: formData.cpf,
+          endereco: formData.endereco,
+          endereco_evento: formData.endereco_evento,
+          data_evento: formData.data_evento,
+          horario: formData.horario,
+          quantidade_adultos: parseInt(formData.quantidade_adultos),
+          quantidade_criancas: parseInt(formData.quantidade_criancas) || 0,
+          telefone: formData.telefone,
+          observacoes: formData.observacoes || null
+        }]);
 
-    toast({
-      title: "Mensagem enviada!",
-      description: "Entraremos em contato em breve. Obrigado!",
-    });
+      if (error) throw error;
 
-    setFormData({
-      nome: '',
-      sobrenome: '',
-      email: '',
-      telefone: '',
-      mensagem: ''
-    });
-    setIsSubmitting(false);
+      toast({
+        title: "Formulário enviado com sucesso!",
+        description: "Entraremos em contato em breve para confirmar seu evento.",
+      });
+
+      setFormData({
+        nome_completo: '',
+        cpf: '',
+        endereco: '',
+        endereco_evento: '',
+        data_evento: '',
+        horario: '',
+        quantidade_adultos: '',
+        quantidade_criancas: '',
+        telefone: '',
+        observacoes: ''
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar formulário",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -53,175 +85,185 @@ export const ContactForm = () => {
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
-              Entre em Contato
+              Envie sua Mensagem
             </span>
           </h2>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            A melhor pizza vai até a sua festa, casa ou eventos. Fale conosco!
+            Preencha o formulário abaixo para solicitar um orçamento para seu evento.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
-          {/* Contact Info */}
-          <div className="space-y-8">
-            <Card className="bg-gray-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center">
-                  <Phone className="text-orange-400 mr-3" size={24} />
-                  Telefone
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-300 text-lg">(43) 99999-9999</p>
-                <p className="text-gray-500">WhatsApp disponível</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center">
-                  <MapPin className="text-orange-400 mr-3" size={24} />
-                  Localização
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-300 text-lg">Londrina - PR</p>
-                <p className="text-gray-500">Entregamos em toda a cidade</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center">
-                  <Clock className="text-orange-400 mr-3" size={24} />
-                  Horário de Funcionamento
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-gray-300">
-                  <p>Segunda à Domingo</p>
-                  <p className="text-lg font-medium">18:00 - 23:00</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gray-900 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center">
-                  <Mail className="text-orange-400 mr-3" size={24} />
-                  Redes Sociais
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <a 
-                    href="https://www.facebook.com/JuliosPIZZAHOUSE/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="block text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    Facebook: JuliosPIZZAHOUSE
-                  </a>
-                  <a 
-                    href="https://instagram.com/juliospizzahouse" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="block text-pink-400 hover:text-pink-300 transition-colors"
-                  >
-                    Instagram: @juliospizzahouse
-                  </a>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Contact Form */}
+        <div className="max-w-4xl mx-auto">
           <Card className="bg-gray-900 border-gray-700">
             <CardHeader>
-              <CardTitle className="text-white text-2xl">Envie sua Mensagem</CardTitle>
+              <CardTitle className="text-2xl text-white text-center">
+                Solicitar Orçamento para Evento
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="nome" className="block text-gray-300 mb-2">Nome</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-gray-300 text-sm font-medium flex items-center">
+                      <User className="mr-2" size={16} />
+                      Nome Completo *
+                    </label>
                     <Input
-                      id="nome"
-                      name="nome"
-                      type="text"
-                      value={formData.nome}
+                      name="nome_completo"
+                      value={formData.nome_completo}
                       onChange={handleChange}
-                      className="bg-gray-800 border-gray-600 text-white"
                       required
+                      className="bg-gray-800 border-gray-600 text-white"
+                      placeholder="Seu nome completo"
                     />
                   </div>
-                  <div>
-                    <label htmlFor="sobrenome" className="block text-gray-300 mb-2">Sobrenome</label>
+
+                  <div className="space-y-2">
+                    <label className="text-gray-300 text-sm font-medium">
+                      CPF *
+                    </label>
                     <Input
-                      id="sobrenome"
-                      name="sobrenome"
-                      type="text"
-                      value={formData.sobrenome}
+                      name="cpf"
+                      value={formData.cpf}
+                      onChange={handleChange}
+                      required
+                      className="bg-gray-800 border-gray-600 text-white"
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-gray-300 text-sm font-medium flex items-center">
+                      <Home className="mr-2" size={16} />
+                      Endereço Residencial *
+                    </label>
+                    <Input
+                      name="endereco"
+                      value={formData.endereco}
+                      onChange={handleChange}
+                      required
+                      className="bg-gray-800 border-gray-600 text-white"
+                      placeholder="Rua, número, bairro, cidade"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-gray-300 text-sm font-medium flex items-center">
+                      <MapPin className="mr-2" size={16} />
+                      Endereço do Evento *
+                    </label>
+                    <Input
+                      name="endereco_evento"
+                      value={formData.endereco_evento}
+                      onChange={handleChange}
+                      required
+                      className="bg-gray-800 border-gray-600 text-white"
+                      placeholder="Local onde será realizado o evento"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-gray-300 text-sm font-medium flex items-center">
+                      <Calendar className="mr-2" size={16} />
+                      Data do Evento *
+                    </label>
+                    <Input
+                      type="date"
+                      name="data_evento"
+                      value={formData.data_evento}
+                      onChange={handleChange}
+                      required
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-gray-300 text-sm font-medium flex items-center">
+                      <Clock className="mr-2" size={16} />
+                      Horário *
+                    </label>
+                    <Input
+                      type="time"
+                      name="horario"
+                      value={formData.horario}
+                      onChange={handleChange}
+                      required
+                      className="bg-gray-800 border-gray-600 text-white"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-gray-300 text-sm font-medium flex items-center">
+                      <Users className="mr-2" size={16} />
+                      Quantidade de Adultos *
+                    </label>
+                    <Input
+                      type="number"
+                      name="quantidade_adultos"
+                      value={formData.quantidade_adultos}
+                      onChange={handleChange}
+                      required
+                      min="1"
+                      className="bg-gray-800 border-gray-600 text-white"
+                      placeholder="Número de adultos"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-gray-300 text-sm font-medium flex items-center">
+                      <Users className="mr-2" size={16} />
+                      Crianças (5 a 9 anos)
+                    </label>
+                    <Input
+                      type="number"
+                      name="quantidade_criancas"
+                      value={formData.quantidade_criancas}
+                      onChange={handleChange}
+                      min="0"
+                      className="bg-gray-800 border-gray-600 text-white"
+                      placeholder="Número de crianças (opcional)"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-gray-300 text-sm font-medium flex items-center">
+                      <Phone className="mr-2" size={16} />
+                      Telefone de Contato *
+                    </label>
+                    <Input
+                      name="telefone"
+                      value={formData.telefone}
+                      onChange={handleChange}
+                      required
+                      className="bg-gray-800 border-gray-600 text-white"
+                      placeholder="(43) 99999-9999"
+                    />
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-gray-300 text-sm font-medium">
+                      Observações
+                    </label>
+                    <Textarea
+                      name="observacoes"
+                      value={formData.observacoes}
                       onChange={handleChange}
                       className="bg-gray-800 border-gray-600 text-white"
-                      required
+                      placeholder="Informações adicionais sobre o evento (opcional)"
+                      rows={4}
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="email" className="block text-gray-300 mb-2">Email</label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="bg-gray-800 border-gray-600 text-white"
-                    required
-                  />
+                <div className="text-center">
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-3 text-lg"
+                  >
+                    {loading ? 'Enviando...' : 'Solicitar Orçamento'}
+                  </Button>
                 </div>
-
-                <div>
-                  <label htmlFor="telefone" className="block text-gray-300 mb-2">Telefone</label>
-                  <Input
-                    id="telefone"
-                    name="telefone"
-                    type="tel"
-                    value={formData.telefone}
-                    onChange={handleChange}
-                    className="bg-gray-800 border-gray-600 text-white"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="mensagem" className="block text-gray-300 mb-2">Mensagem</label>
-                  <Textarea
-                    id="mensagem"
-                    name="mensagem"
-                    rows={4}
-                    value={formData.mensagem}
-                    onChange={handleChange}
-                    className="bg-gray-800 border-gray-600 text-white"
-                    placeholder="Conte-nos sobre seu evento ou pedido especial..."
-                  />
-                </div>
-
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white py-3"
-                >
-                  {isSubmitting ? (
-                    "Enviando..."
-                  ) : (
-                    <>
-                      <Send className="mr-2" size={20} />
-                      Enviar Mensagem
-                    </>
-                  )}
-                </Button>
               </form>
             </CardContent>
           </Card>

@@ -9,7 +9,7 @@ export const Header = () => {
   const menuItems = [
     { label: 'INÍCIO', href: '#home' },
     { label: 'SOBRE NÓS', href: '#about' },
-    { label: 'NOSSAS PIZZAS', href: '#pizzas' },
+    { label: 'CARDÁPIO', href: '/cardapio' },
     { label: 'INSTAGRAM', href: '#instagram' },
     { label: 'CONTATO', href: '#contact' }
   ];
@@ -20,8 +20,12 @@ export const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-xl">J</span>
+            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-orange-500">
+              <img 
+                src="/lovable-uploads/67b1b7fb-0eda-4d5b-bfc2-5c77a6bea10e.png" 
+                alt="Júlio's Pizza House Logo" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
