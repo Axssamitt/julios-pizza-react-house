@@ -1,0 +1,78 @@
+
+import React, { useState } from 'react';
+import { Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+export const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const menuItems = [
+    { label: 'INÍCIO', href: '#home' },
+    { label: 'SOBRE NÓS', href: '#about' },
+    { label: 'NOSSAS PIZZAS', href: '#pizzas' },
+    { label: 'INSTAGRAM', href: '#instagram' },
+    { label: 'CONTATO', href: '#contact' }
+  ];
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-orange-500/20">
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center">
+              <span className="text-white font-bold text-xl">J</span>
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                Júlio's Pizza House
+              </h1>
+              <p className="text-orange-400 text-sm">O sabor vai até você</p>
+            </div>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex space-x-8">
+            {menuItems.map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                className="text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium"
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="lg:hidden text-white hover:text-orange-400"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </Button>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <nav className="lg:hidden mt-4 pb-4 border-t border-gray-700 pt-4">
+            <div className="flex flex-col space-y-3">
+              {menuItems.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  className="text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          </nav>
+        )}
+      </div>
+    </header>
+  );
+};
