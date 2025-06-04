@@ -10,7 +10,7 @@ interface AnalyticsData {
   id: string;
   page_path: string;
   user_agent: string;
-  ip_address: string;
+  ip_address: unknown;
   referrer: string;
   session_id: string;
   created_at: string;
