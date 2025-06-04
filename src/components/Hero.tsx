@@ -1,9 +1,43 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { MapPin, Clock, Utensils } from 'lucide-react';
+import { MapPin, Clock, Utensils, Settings } from 'lucide-react';
+import { HeroCarousel } from './HeroCarousel';
+import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
+
+interface HomeConfig {
+  hero_title: string;
+  hero_subtitle: string;
+}
 
 export const Hero = () => {
+  const [config, setConfig] = useState<HomeConfig>({
+    hero_title: 'As Melhores Pizzas de Londrina',
+    hero_subtitle: 'Sabor autêntico que vai até você. Pizzas artesanais feitas com ingredientes frescos e muito amor.'
+  });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('home_config')
+          .select('hero_title, hero_subtitle')
+          .limit(1)
+          .single();
+        
+        if (data) {
+          setConfig(data);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar configurações da home:', error);
+      }
+    };
+
+    fetchConfig();
+  }, []);
+
   return (
     <section id="home" className="pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900">
       <div className="container mx-auto px-4">
@@ -12,21 +46,30 @@ export const Hero = () => {
           <div className="flex-1 text-center lg:text-left">
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
               <span className="bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent">
-                As Melhores
+                {config.hero_title}
               </span>
-              <br />
-              <span className="text-white">Pizzas de</span>
-              <br />
-              <span className="text-orange-400">Londrina</span>
             </h2>
             <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl">
-              Sabor autêntico que vai até você. Pizzas artesanais feitas com ingredientes frescos e muito amor.
+              {config.hero_subtitle}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Button size="lg" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 text-lg">
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 text-lg"
+                onClick={() => navigate('/cardapio')}
+              >
                 <Utensils className="mr-2" size={20} />
                 Ver Cardápio
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white px-8 py-4 text-lg"
+                onClick={() => navigate('/auth')}
+              >
+                <Settings className="mr-2" size={20} />
+                Admin
               </Button>
             </div>
 
@@ -47,15 +90,10 @@ export const Hero = () => {
             </div>
           </div>
 
-          {/* Hero Image */}
+          {/* Hero Carousel */}
           <div className="flex-1 relative">
             <div className="relative w-full max-w-md mx-auto lg:max-w-full">
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-600/20 rounded-full blur-3xl"></div>
-              <div className="relative bg-gray-800 rounded-full p-8 border border-orange-500/30">
-                <div className="w-64 h-64 md:w-80 md:h-80 bg-gradient-to-br from-orange-400 to-red-600 rounded-full flex items-center justify-center">
-                  <span className="text-6xl md:text-8xl">🍕</span>
-                </div>
-              </div>
+              <HeroCarousel />
             </div>
           </div>
         </div>

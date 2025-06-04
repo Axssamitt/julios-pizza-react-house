@@ -1,16 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
-import { LogOut, Pizza, Settings, FileText, Users } from 'lucide-react';
+import { LogOut, Pizza, Settings, FileText, Users, BarChart3, Home, Image } from 'lucide-react';
 import { PizzaManager } from '@/components/admin/PizzaManager';
 import { ConfigManager } from '@/components/admin/ConfigManager';
 import { FormularioManager } from '@/components/admin/FormularioManager';
 import { ContratoManager } from '@/components/admin/ContratoManager';
+import { Dashboard } from '@/components/admin/Dashboard';
+import { HomeConfigManager } from '@/components/admin/HomeConfigManager';
+import { CarouselManager } from '@/components/admin/CarouselManager';
 
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -84,8 +86,20 @@ const Admin = () => {
       </header>
 
       <main className="container mx-auto p-6">
-        <Tabs defaultValue="pizzas" className="space-y-6">
+        <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList className="bg-gray-800 border-gray-700">
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-orange-600">
+              <BarChart3 className="mr-2" size={16} />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="home" className="data-[state=active]:bg-orange-600">
+              <Home className="mr-2" size={16} />
+              Home
+            </TabsTrigger>
+            <TabsTrigger value="carousel" className="data-[state=active]:bg-orange-600">
+              <Image className="mr-2" size={16} />
+              Carrossel
+            </TabsTrigger>
             <TabsTrigger value="pizzas" className="data-[state=active]:bg-orange-600">
               <Pizza className="mr-2" size={16} />
               Pizzas
@@ -103,6 +117,18 @@ const Admin = () => {
               Contratos
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard">
+            <Dashboard />
+          </TabsContent>
+
+          <TabsContent value="home">
+            <HomeConfigManager />
+          </TabsContent>
+
+          <TabsContent value="carousel">
+            <CarouselManager />
+          </TabsContent>
 
           <TabsContent value="pizzas">
             <PizzaManager />

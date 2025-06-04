@@ -1,0 +1,338 @@
+
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { supabase } from '@/integrations/supabase/client';
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+interface CarouselImage {
+  id: string;
+  title: string;
+  image_url: string;
+  order_index: number;
+  active: boolean;
+}
+
+export const CarouselManager = () => {
+  const [images, setImages] = useState<CarouselImage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingImage, setEditingImage] = useState<CarouselImage | null>(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    image_url: ''
+  });
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchImages();
+  }, []);
+
+  const fetchImages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('carousel_images')
+        .select('*')
+        .order('order_index');
+      
+      if (error) throw error;
+      setImages(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar imagens:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as imagens do carrossel.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const nextOrderIndex = Math.max(...images.map(img => img.order_index), 0) + 1;
+      
+      if (editingImage) {
+        const { error } = await supabase
+          .from('carousel_images')
+          .update({
+            title: formData.title,
+            image_url: formData.image_url,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingImage.id);
+
+        if (error) throw error;
+        toast({
+          title: "Sucesso",
+          description: "Imagem atualizada com sucesso!",
+        });
+      } else {
+        const { error } = await supabase
+          .from('carousel_images')
+          .insert({
+            title: formData.title,
+            image_url: formData.image_url,
+            order_index: nextOrderIndex,
+            active: true
+          });
+
+        if (error) throw error;
+        toast({
+          title: "Sucesso",
+          description: "Imagem adicionada com sucesso!",
+        });
+      }
+
+      setFormData({ title: '', image_url: '' });
+      setEditingImage(null);
+      setDialogOpen(false);
+      fetchImages();
+    } catch (error) {
+      console.error('Erro ao salvar imagem:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar a imagem.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta imagem?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('carousel_images')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      toast({
+        title: "Sucesso",
+        description: "Imagem removida com sucesso!",
+      });
+      fetchImages();
+    } catch (error) {
+      console.error('Erro ao excluir imagem:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a imagem.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleActive = async (id: string, active: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('carousel_images')
+        .update({ active: !active })
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchImages();
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+    }
+  };
+
+  const handleOrderChange = async (id: string, direction: 'up' | 'down') => {
+    const currentImage = images.find(img => img.id === id);
+    if (!currentImage) return;
+
+    const otherImages = images.filter(img => img.id !== id);
+    const targetOrder = direction === 'up' 
+      ? Math.max(...otherImages.filter(img => img.order_index < currentImage.order_index).map(img => img.order_index), 0)
+      : Math.min(...otherImages.filter(img => img.order_index > currentImage.order_index).map(img => img.order_index), currentImage.order_index + 1);
+
+    try {
+      const { error } = await supabase
+        .from('carousel_images')
+        .update({ order_index: targetOrder })
+        .eq('id', id);
+
+      if (error) throw error;
+      fetchImages();
+    } catch (error) {
+      console.error('Erro ao alterar ordem:', error);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-white">Carregando...</div>;
+  }
+
+  return (
+    <Card className="bg-gray-800 border-gray-700">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-white">Gerenciar Carrossel</CardTitle>
+            <CardDescription className="text-gray-400">
+              Adicione e gerencie as imagens do carrossel da página principal
+            </CardDescription>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                className="bg-orange-600 hover:bg-orange-700"
+                onClick={() => {
+                  setEditingImage(null);
+                  setFormData({ title: '', image_url: '' });
+                }}
+              >
+                <Plus className="mr-2" size={16} />
+                Adicionar Imagem
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-gray-800 border-gray-700">
+              <DialogHeader>
+                <DialogTitle className="text-white">
+                  {editingImage ? 'Editar' : 'Adicionar'} Imagem
+                </DialogTitle>
+                <DialogDescription className="text-gray-400">
+                  {editingImage ? 'Edite os dados da imagem' : 'Adicione uma nova imagem ao carrossel'}
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <Label htmlFor="title" className="text-gray-300">Título</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Título da imagem"
+                    required
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="image_url" className="text-gray-300">URL da Imagem</Label>
+                  <Input
+                    id="image_url"
+                    value={formData.image_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                    placeholder="https://exemplo.com/imagem.jpg"
+                    required
+                    className="bg-gray-700 border-gray-600 text-white"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    type="submit" 
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    {editingImage ? 'Atualizar' : 'Adicionar'}
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setDialogOpen(false)}
+                    className="border-gray-600 text-gray-300"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow className="border-gray-700">
+              <TableHead className="text-gray-300">Imagem</TableHead>
+              <TableHead className="text-gray-300">Título</TableHead>
+              <TableHead className="text-gray-300">Status</TableHead>
+              <TableHead className="text-gray-300">Ordem</TableHead>
+              <TableHead className="text-gray-300">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {images.map((image) => (
+              <TableRow key={image.id} className="border-gray-700">
+                <TableCell>
+                  <img 
+                    src={image.image_url} 
+                    alt={image.title}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                </TableCell>
+                <TableCell className="text-white">{image.title}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleToggleActive(image.id, image.active)}
+                    className={image.active ? 
+                      "border-green-500 text-green-400 hover:bg-green-500 hover:text-white" : 
+                      "border-gray-500 text-gray-400 hover:bg-gray-500 hover:text-white"
+                    }
+                  >
+                    {image.active ? 'Ativo' : 'Inativo'}
+                  </Button>
+                </TableCell>
+                <TableCell className="text-white">
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOrderChange(image.id, 'up')}
+                      className="border-gray-600 text-gray-300"
+                    >
+                      <ArrowUp size={14} />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOrderChange(image.id, 'down')}
+                      className="border-gray-600 text-gray-300"
+                    >
+                      <ArrowDown size={14} />
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditingImage(image);
+                        setFormData({
+                          title: image.title,
+                          image_url: image.image_url
+                        });
+                        setDialogOpen(true);
+                      }}
+                      className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
+                    >
+                      <Edit size={14} />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(image.id)}
+                      className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+};

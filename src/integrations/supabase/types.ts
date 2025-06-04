@@ -30,6 +30,36 @@ export type Database = {
         }
         Relationships: []
       }
+      carousel_images: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          id: string
+          image_url: string
+          order_index: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          image_url: string
+          order_index?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          order_index?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       configuracoes: {
         Row: {
           ativo: boolean | null
@@ -108,6 +138,60 @@ export type Database = {
           quantidade_criancas?: number | null
           status?: string | null
           telefone?: string
+        }
+        Relationships: []
+      }
+      home_config: {
+        Row: {
+          hero_subtitle: string
+          hero_title: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          hero_subtitle?: string
+          hero_title?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          hero_subtitle?: string
+          hero_title?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      page_analytics: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          page_path: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          page_path: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          page_path?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }
