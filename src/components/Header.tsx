@@ -11,7 +11,8 @@ export const Header = () => {
     { label: 'SOBRE NÓS', href: '#about' },
     { label: 'CARDÁPIO', href: '/cardapio' },
     { label: 'INSTAGRAM', href: '#instagram' },
-    { label: 'CONTATO', href: '#contact' }
+    { label: 'CONTATO', href: '#contact' },
+    { label: 'ADMIN', href: '/auth' }
   ];
 
   return (
@@ -41,7 +42,9 @@ export const Header = () => {
               <a
                 key={item.label}
                 href={item.href}
-                className="text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium"
+                className={`text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium ${
+                  item.label === 'ADMIN' ? 'bg-orange-500/20 px-3 py-1 rounded-md border border-orange-500/50' : ''
+                }`}
               >
                 {item.label}
               </a>
@@ -67,7 +70,9 @@ export const Header = () => {
                 <a
                   key={item.label}
                   href={item.href}
-                  className="text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium"
+                  className={`text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium ${
+                    item.label === 'ADMIN' ? 'bg-orange-500/20 px-3 py-2 rounded-md border border-orange-500/50 text-center' : ''
+                  }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.label}
