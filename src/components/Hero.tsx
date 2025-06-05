@@ -1,10 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { MapPin, Clock, Utensils, Settings } from 'lucide-react';
+import { MapPin, Clock, Utensils } from 'lucide-react';
 import { HeroCarousel } from './HeroCarousel';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
 
 interface HomeConfig {
   hero_title: string;
@@ -16,7 +14,6 @@ export const Hero = () => {
     hero_title: 'As Melhores Pizzas de Londrina',
     hero_subtitle: 'Sabor autêntico que vai até você. Pizzas artesanais feitas com ingredientes frescos e muito amor.'
   });
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -49,29 +46,9 @@ export const Hero = () => {
                 {config.hero_title}
               </span>
             </h2>
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl">
+            <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl">
               {config.hero_subtitle}
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 text-lg"
-                onClick={() => navigate('/cardapio')}
-              >
-                <Utensils className="mr-2" size={20} />
-                Ver Cardápio
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white px-8 py-4 text-lg"
-                onClick={() => navigate('/auth')}
-              >
-                <Settings className="mr-2" size={20} />
-                Admin
-              </Button>
-            </div>
 
             {/* Info Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

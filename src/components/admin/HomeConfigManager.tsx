@@ -19,8 +19,8 @@ export const HomeConfigManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    hero_title: '',
-    hero_subtitle: ''
+    hero_title: 'As Melhores Pizzas de Londrina',
+    hero_subtitle: 'Sabor autêntico que vai até você. Pizzas artesanais feitas com ingredientes frescos e muito amor.'
   });
   const { toast } = useToast();
 
@@ -33,10 +33,12 @@ export const HomeConfigManager = () => {
       const { data, error } = await supabase
         .from('home_config')
         .select('*')
-        .limit(1)
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.error('Erro ao carregar configurações:', error);
+        throw error;
+      }
       
       if (data) {
         setConfig(data);
@@ -79,15 +81,18 @@ export const HomeConfigManager = () => {
         if (error) throw error;
       } else {
         // Criar nova configuração
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('home_config')
           .insert({
             hero_title: formData.hero_title,
             hero_subtitle: formData.hero_subtitle,
             updated_by: user?.id
-          });
+          })
+          .select()
+          .single();
 
         if (error) throw error;
+        setConfig(data);
       }
 
       toast({

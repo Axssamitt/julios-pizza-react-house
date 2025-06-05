@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
-import { LogOut, Pizza, Settings, FileText, Users, BarChart3, Home, Image } from 'lucide-react';
+import { LogOut, Pizza, Settings, FileText, Users, BarChart3, Home, Image, Instagram, Shield } from 'lucide-react';
 import { PizzaManager } from '@/components/admin/PizzaManager';
 import { ConfigManager } from '@/components/admin/ConfigManager';
 import { FormularioManager } from '@/components/admin/FormularioManager';
@@ -13,6 +13,8 @@ import { ContratoManager } from '@/components/admin/ContratoManager';
 import { Dashboard } from '@/components/admin/Dashboard';
 import { HomeConfigManager } from '@/components/admin/HomeConfigManager';
 import { CarouselManager } from '@/components/admin/CarouselManager';
+import { UserManager } from '@/components/admin/UserManager';
+import { InstagramManager } from '@/components/admin/InstagramManager';
 
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -64,7 +66,7 @@ const Admin = () => {
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-orange-500">
               <img 
-                src="/lovable-uploads/67b1b7fb-0eda-4d5b-bfc2-5c77a6bea10e.png" 
+                src="https://storage.googleapis.com/wzukusers/user-34847409/images/5cf9a50e698b6eDiLZd7/logoo_d200.png" 
                 alt="Logo" 
                 className="w-full h-full object-cover"
               />
@@ -87,7 +89,7 @@ const Admin = () => {
 
       <main className="container mx-auto p-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="bg-gray-800 border-gray-700">
+          <TabsList className="bg-gray-800 border-gray-700 grid grid-cols-4 lg:grid-cols-8 gap-1">
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-orange-600">
               <BarChart3 className="mr-2" size={16} />
               Dashboard
@@ -104,9 +106,13 @@ const Admin = () => {
               <Pizza className="mr-2" size={16} />
               Pizzas
             </TabsTrigger>
+            <TabsTrigger value="instagram" className="data-[state=active]:bg-orange-600">
+              <Instagram className="mr-2" size={16} />
+              Instagram
+            </TabsTrigger>
             <TabsTrigger value="config" className="data-[state=active]:bg-orange-600">
               <Settings className="mr-2" size={16} />
-              Configurações
+              Config
             </TabsTrigger>
             <TabsTrigger value="formularios" className="data-[state=active]:bg-orange-600">
               <Users className="mr-2" size={16} />
@@ -115,6 +121,10 @@ const Admin = () => {
             <TabsTrigger value="contratos" className="data-[state=active]:bg-orange-600">
               <FileText className="mr-2" size={16} />
               Contratos
+            </TabsTrigger>
+            <TabsTrigger value="usuarios" className="data-[state=active]:bg-orange-600">
+              <Shield className="mr-2" size={16} />
+              Usuários
             </TabsTrigger>
           </TabsList>
 
@@ -134,6 +144,10 @@ const Admin = () => {
             <PizzaManager />
           </TabsContent>
 
+          <TabsContent value="instagram">
+            <InstagramManager />
+          </TabsContent>
+
           <TabsContent value="config">
             <ConfigManager />
           </TabsContent>
@@ -144,6 +158,10 @@ const Admin = () => {
 
           <TabsContent value="contratos">
             <ContratoManager />
+          </TabsContent>
+
+          <TabsContent value="usuarios">
+            <UserManager />
           </TabsContent>
         </Tabs>
       </main>

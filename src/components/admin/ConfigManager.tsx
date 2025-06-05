@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface Config {
   id: string;
@@ -17,6 +18,7 @@ interface Config {
 
 export const ConfigManager = () => {
   const [configs, setConfigs] = useState<Config[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newConfig, setNewConfig] = useState({
     tipo: 'contato',
@@ -24,62 +26,127 @@ export const ConfigManager = () => {
     valor: ''
   });
   const [showAddForm, setShowAddForm] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchConfigs();
   }, []);
 
   const fetchConfigs = async () => {
-    const { data, error } = await supabase
-      .from('configuracoes')
-      .select('*')
-      .order('tipo', { ascending: true })
-      .order('ordem', { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from('configuracoes')
+        .select('*')
+        .order('tipo', { ascending: true })
+        .order('ordem', { ascending: true });
 
-    if (!error && data) {
-      setConfigs(data);
+      if (error) throw error;
+      setConfigs(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as configurações.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAdd = async () => {
-    if (!newConfig.label || !newConfig.valor) return;
+    if (!newConfig.label || !newConfig.valor) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const { error } = await supabase
-      .from('configuracoes')
-      .insert([{
-        ...newConfig,
-        ordem: configs.filter(c => c.tipo === newConfig.tipo).length
-      }]);
+    try {
+      const { error } = await supabase
+        .from('configuracoes')
+        .insert([{
+          ...newConfig,
+          ordem: configs.filter(c => c.tipo === newConfig.tipo).length
+        }]);
 
-    if (!error) {
+      if (error) throw error;
+
       setNewConfig({ tipo: 'contato', label: '', valor: '' });
       setShowAddForm(false);
+      toast({
+        title: "Sucesso",
+        description: "Configuração adicionada com sucesso!",
+      });
       fetchConfigs();
+    } catch (error) {
+      console.error('Erro ao adicionar configuração:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível adicionar a configuração.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleUpdate = async (id: string, updates: Partial<Config>) => {
-    const { error } = await supabase
-      .from('configuracoes')
-      .update(updates)
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from('configuracoes')
+        .update(updates)
+        .eq('id', id);
 
-    if (!error) {
+      if (error) throw error;
+
       setEditingId(null);
+      toast({
+        title: "Sucesso",
+        description: "Configuração atualizada com sucesso!",
+      });
       fetchConfigs();
+    } catch (error) {
+      console.error('Erro ao atualizar configuração:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar a configuração.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase
-      .from('configuracoes')
-      .delete()
-      .eq('id', id);
+    if (!confirm('Tem certeza que deseja excluir esta configuração?')) return;
 
-    if (!error) {
+    try {
+      const { error } = await supabase
+        .from('configuracoes')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Configuração removida com sucesso!",
+      });
       fetchConfigs();
+    } catch (error) {
+      console.error('Erro ao excluir configuração:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a configuração.",
+        variant: "destructive",
+      });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="text-white">Carregando configurações...</div>
+    );
+  }
 
   const contatos = configs.filter(c => c.tipo === 'contato');
   const localizacoes = configs.filter(c => c.tipo === 'localizacao');
@@ -157,6 +224,9 @@ export const ConfigManager = () => {
                 onDelete={handleDelete}
               />
             ))}
+            {contatos.length === 0 && (
+              <p className="text-gray-400 text-center py-4">Nenhuma configuração de contato encontrada.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -175,6 +245,9 @@ export const ConfigManager = () => {
                 onDelete={handleDelete}
               />
             ))}
+            {localizacoes.length === 0 && (
+              <p className="text-gray-400 text-center py-4">Nenhuma configuração de localização encontrada.</p>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -11,7 +11,8 @@ export const Header = () => {
     { label: 'SOBRE NÓS', href: '#about' },
     { label: 'CARDÁPIO', href: '/cardapio' },
     { label: 'INSTAGRAM', href: '#instagram' },
-    { label: 'CONTATO', href: '#contact' }
+    { label: 'CONTATO', href: '#contact' },
+    { label: 'ADMIN', href: '/auth' }
   ];
 
   return (
@@ -22,7 +23,7 @@ export const Header = () => {
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-orange-500">
               <img 
-                src="/lovable-uploads/67b1b7fb-0eda-4d5b-bfc2-5c77a6bea10e.png" 
+                src="https://storage.googleapis.com/wzukusers/user-34847409/images/5cf9a50e698b6eDiLZd7/logoo_d200.png" 
                 alt="Júlio's Pizza House Logo" 
                 className="w-full h-full object-cover"
               />
@@ -41,7 +42,9 @@ export const Header = () => {
               <a
                 key={item.label}
                 href={item.href}
-                className="text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium"
+                className={`text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium ${
+                  item.label === 'ADMIN' ? 'bg-orange-500/20 px-3 py-1 rounded-md border border-orange-500/50' : ''
+                }`}
               >
                 {item.label}
               </a>
@@ -67,7 +70,9 @@ export const Header = () => {
                 <a
                   key={item.label}
                   href={item.href}
-                  className="text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium"
+                  className={`text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium ${
+                    item.label === 'ADMIN' ? 'bg-orange-500/20 px-3 py-2 rounded-md border border-orange-500/50 text-center' : ''
+                  }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.label}
