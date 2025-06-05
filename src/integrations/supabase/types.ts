@@ -165,6 +165,39 @@ export type Database = {
         }
         Relationships: []
       }
+      instagram_posts: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          image_url: string
+          order_index: number
+          post_url: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_url: string
+          order_index?: number
+          post_url: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          image_url?: string
+          order_index?: number
+          post_url?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       page_analytics: {
         Row: {
           created_at: string

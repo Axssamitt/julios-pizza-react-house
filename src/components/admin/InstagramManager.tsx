@@ -39,7 +39,7 @@ export const InstagramManager = () => {
   const fetchPosts = async () => {
     try {
       const { data, error } = await supabase
-        .from('instagram_posts')
+        .from('instagram_posts' as any)
         .select('*')
         .order('order_index');
       
@@ -64,7 +64,7 @@ export const InstagramManager = () => {
       
       if (editingPost) {
         const { error } = await supabase
-          .from('instagram_posts')
+          .from('instagram_posts' as any)
           .update({
             title: formData.title,
             post_url: formData.post_url,
@@ -80,7 +80,7 @@ export const InstagramManager = () => {
         });
       } else {
         const { error } = await supabase
-          .from('instagram_posts')
+          .from('instagram_posts' as any)
           .insert({
             title: formData.title,
             post_url: formData.post_url,
@@ -115,7 +115,7 @@ export const InstagramManager = () => {
 
     try {
       const { error } = await supabase
-        .from('instagram_posts')
+        .from('instagram_posts' as any)
         .delete()
         .eq('id', id);
 
@@ -138,7 +138,7 @@ export const InstagramManager = () => {
   const handleToggleActive = async (id: string, active: boolean) => {
     try {
       const { error } = await supabase
-        .from('instagram_posts')
+        .from('instagram_posts' as any)
         .update({ active: !active })
         .eq('id', id);
 
