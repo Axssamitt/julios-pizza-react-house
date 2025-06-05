@@ -178,7 +178,7 @@ export const InstagramManager = () => {
                   {editingPost ? 'Editar' : 'Adicionar'} Post do Instagram
                 </DialogTitle>
                 <DialogDescription className="text-gray-400">
-                  {editingPost ? 'Edite os dados do post' : 'Adicione um novo post do Instagram'}
+                  {editingPost ? 'Edite as informações do post do Instagram' : 'Adicione um novo post do Instagram à galeria'}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
