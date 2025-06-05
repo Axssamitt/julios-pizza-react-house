@@ -9,16 +9,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Edit, Trash2, Instagram, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import type { Tables } from '@/integrations/supabase/types';
 
-interface InstagramPost {
-  id: string;
-  title: string;
-  post_url: string;
-  image_url: string;
-  active: boolean;
-  order_index: number;
-  created_at: string;
-}
+type InstagramPost = Tables<'instagram_posts'>;
 
 export const InstagramManager = () => {
   const [posts, setPosts] = useState<InstagramPost[]>([]);
@@ -39,7 +32,7 @@ export const InstagramManager = () => {
   const fetchPosts = async () => {
     try {
       const { data, error } = await supabase
-        .from('instagram_posts' as any)
+        .from('instagram_posts')
         .select('*')
         .order('order_index');
       
@@ -64,7 +57,7 @@ export const InstagramManager = () => {
       
       if (editingPost) {
         const { error } = await supabase
-          .from('instagram_posts' as any)
+          .from('instagram_posts')
           .update({
             title: formData.title,
             post_url: formData.post_url,
@@ -80,7 +73,7 @@ export const InstagramManager = () => {
         });
       } else {
         const { error } = await supabase
-          .from('instagram_posts' as any)
+          .from('instagram_posts')
           .insert({
             title: formData.title,
             post_url: formData.post_url,
@@ -115,7 +108,7 @@ export const InstagramManager = () => {
 
     try {
       const { error } = await supabase
-        .from('instagram_posts' as any)
+        .from('instagram_posts')
         .delete()
         .eq('id', id);
 
@@ -138,7 +131,7 @@ export const InstagramManager = () => {
   const handleToggleActive = async (id: string, active: boolean) => {
     try {
       const { error } = await supabase
-        .from('instagram_posts' as any)
+        .from('instagram_posts')
         .update({ active: !active })
         .eq('id', id);
 
