@@ -9,9 +9,17 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { supabase } from '@/integrations/supabase/client';
 import { Plus, Edit, Trash2, Instagram, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Tables } from '@/integrations/supabase/types';
 
-type InstagramPost = Tables<'instagram_posts'>;
+interface InstagramPost {
+  id: string;
+  titulo: string;
+  url_post: string;
+  url_imagem: string;
+  ordem: number;
+  ativo: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export const InstagramManager = () => {
   const [posts, setPosts] = useState<InstagramPost[]>([]);
@@ -19,9 +27,9 @@ export const InstagramManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<InstagramPost | null>(null);
   const [formData, setFormData] = useState({
-    title: '',
-    post_url: '',
-    image_url: ''
+    titulo: '',
+    url_post: '',
+    url_imagem: ''
   });
   const { toast } = useToast();
 
@@ -34,7 +42,7 @@ export const InstagramManager = () => {
       const { data, error } = await supabase
         .from('instagram_posts')
         .select('*')
-        .order('order_index');
+        .order('ordem');
       
       if (error) throw error;
       setPosts(data || []);
@@ -53,15 +61,15 @@ export const InstagramManager = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const nextOrderIndex = Math.max(...posts.map(post => post.order_index), 0) + 1;
+      const nextOrder = Math.max(...posts.map(post => post.ordem), 0) + 1;
       
       if (editingPost) {
         const { error } = await supabase
           .from('instagram_posts')
           .update({
-            title: formData.title,
-            post_url: formData.post_url,
-            image_url: formData.image_url,
+            titulo: formData.titulo,
+            url_post: formData.url_post,
+            url_imagem: formData.url_imagem,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingPost.id);
@@ -75,11 +83,11 @@ export const InstagramManager = () => {
         const { error } = await supabase
           .from('instagram_posts')
           .insert({
-            title: formData.title,
-            post_url: formData.post_url,
-            image_url: formData.image_url,
-            order_index: nextOrderIndex,
-            active: true
+            titulo: formData.titulo,
+            url_post: formData.url_post,
+            url_imagem: formData.url_imagem,
+            ordem: nextOrder,
+            ativo: true
           });
 
         if (error) throw error;
@@ -89,7 +97,7 @@ export const InstagramManager = () => {
         });
       }
 
-      setFormData({ title: '', post_url: '', image_url: '' });
+      setFormData({ titulo: '', url_post: '', url_imagem: '' });
       setEditingPost(null);
       setDialogOpen(false);
       fetchPosts();
@@ -128,11 +136,11 @@ export const InstagramManager = () => {
     }
   };
 
-  const handleToggleActive = async (id: string, active: boolean) => {
+  const handleToggleActive = async (id: string, ativo: boolean) => {
     try {
       const { error } = await supabase
         .from('instagram_posts')
-        .update({ active: !active })
+        .update({ ativo: !ativo })
         .eq('id', id);
 
       if (error) throw error;
@@ -165,7 +173,7 @@ export const InstagramManager = () => {
                 className="bg-pink-600 hover:bg-pink-700"
                 onClick={() => {
                   setEditingPost(null);
-                  setFormData({ title: '', post_url: '', image_url: '' });
+                  setFormData({ titulo: '', url_post: '', url_imagem: '' });
                 }}
               >
                 <Plus className="mr-2" size={16} />
@@ -183,33 +191,33 @@ export const InstagramManager = () => {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="title" className="text-gray-300">Título/Descrição</Label>
+                  <Label htmlFor="titulo" className="text-gray-300">Título/Descrição</Label>
                   <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    id="titulo"
+                    value={formData.titulo}
+                    onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
                     placeholder="Descrição do post"
                     required
                     className="bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="post_url" className="text-gray-300">URL do Post no Instagram</Label>
+                  <Label htmlFor="url_post" className="text-gray-300">URL do Post no Instagram</Label>
                   <Input
-                    id="post_url"
-                    value={formData.post_url}
-                    onChange={(e) => setFormData(prev => ({ ...prev, post_url: e.target.value }))}
+                    id="url_post"
+                    value={formData.url_post}
+                    onChange={(e) => setFormData(prev => ({ ...prev, url_post: e.target.value }))}
                     placeholder="https://www.instagram.com/p/..."
                     required
                     className="bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="image_url" className="text-gray-300">URL da Imagem</Label>
+                  <Label htmlFor="url_imagem" className="text-gray-300">URL da Imagem</Label>
                   <Input
-                    id="image_url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                    id="url_imagem"
+                    value={formData.url_imagem}
+                    onChange={(e) => setFormData(prev => ({ ...prev, url_imagem: e.target.value }))}
                     placeholder="https://exemplo.com/imagem.jpg"
                     required
                     className="bg-gray-700 border-gray-600 text-white"
@@ -251,23 +259,23 @@ export const InstagramManager = () => {
               <TableRow key={post.id} className="border-gray-700">
                 <TableCell>
                   <img 
-                    src={post.image_url} 
-                    alt={post.title}
+                    src={post.url_imagem} 
+                    alt={post.titulo}
                     className="w-16 h-16 object-cover rounded"
                   />
                 </TableCell>
-                <TableCell className="text-white">{post.title}</TableCell>
+                <TableCell className="text-white">{post.titulo}</TableCell>
                 <TableCell>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleToggleActive(post.id, post.active)}
-                    className={post.active ? 
+                    onClick={() => handleToggleActive(post.id, post.ativo)}
+                    className={post.ativo ? 
                       "border-green-500 text-green-400 hover:bg-green-500 hover:text-white" : 
                       "border-gray-500 text-gray-400 hover:bg-gray-500 hover:text-white"
                     }
                   >
-                    {post.active ? 'Ativo' : 'Inativo'}
+                    {post.ativo ? 'Ativo' : 'Inativo'}
                   </Button>
                 </TableCell>
                 <TableCell>
@@ -275,8 +283,9 @@ export const InstagramManager = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(post.post_url, '_blank')}
+                      onClick={() => window.open(post.url_post, '_blank')}
                       className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
+                      aria-label={`Abrir post ${post.titulo} no Instagram`}
                     >
                       <ExternalLink size={14} />
                     </Button>
@@ -286,13 +295,14 @@ export const InstagramManager = () => {
                       onClick={() => {
                         setEditingPost(post);
                         setFormData({
-                          title: post.title,
-                          post_url: post.post_url,
-                          image_url: post.image_url
+                          titulo: post.titulo,
+                          url_post: post.url_post,
+                          url_imagem: post.url_imagem
                         });
                         setDialogOpen(true);
                       }}
                       className="border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white"
+                      aria-label={`Editar post ${post.titulo}`}
                     >
                       <Edit size={14} />
                     </Button>
@@ -301,6 +311,7 @@ export const InstagramManager = () => {
                       size="sm"
                       onClick={() => handleDelete(post.id)}
                       className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
+                      aria-label={`Excluir post ${post.titulo}`}
                     >
                       <Trash2 size={14} />
                     </Button>

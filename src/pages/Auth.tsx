@@ -5,33 +5,22 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { User } from '@supabase/supabase-js';
+import { useToast } from '@/hooks/use-toast';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        navigate('/admin');
-      }
-    });
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        navigate('/admin');
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    // Verificar se já está logado via localStorage
+    const adminData = localStorage.getItem('admin_user');
+    if (adminData) {
+      navigate('/admin');
+    }
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -40,14 +29,45 @@ const Auth = () => {
     setError('');
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // Buscar usuário na tabela usuarios
+      const { data: usuarios, error: queryError } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('email', email)
+        .eq('senha', password)
+        .eq('ativo', true)
+        .limit(1);
+
+      if (queryError) {
+        throw new Error('Erro ao verificar credenciais');
+      }
+
+      if (!usuarios || usuarios.length === 0) {
+        throw new Error('Email ou senha incorretos');
+      }
+
+      const usuario = usuarios[0];
+
+      // Salvar dados do usuário no localStorage
+      localStorage.setItem('admin_user', JSON.stringify({
+        id: usuario.id,
+        email: usuario.email,
+        nome: usuario.nome
+      }));
+
+      toast({
+        title: "Sucesso",
+        description: "Login realizado com sucesso!",
       });
 
-      if (error) throw error;
+      navigate('/admin');
     } catch (error: any) {
       setError(error.message);
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -59,7 +79,7 @@ const Auth = () => {
         <CardHeader className="text-center">
           <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-orange-500 mx-auto mb-4">
             <img 
-              src="/lovable-uploads/67b1b7fb-0eda-4d5b-bfc2-5c77a6bea10e.png" 
+              src="https://storage.googleapis.com/wzukusers/user-34847409/images/5cf9a50e698b6eDiLZd7/logoo_d200.png" 
               alt="Júlio's Pizza House Logo" 
               className="w-full h-full object-cover"
             />
@@ -104,6 +124,9 @@ const Auth = () => {
               {loading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
+          <div className="mt-4 text-center text-sm text-gray-400">
+            Usuário padrão: admin@juliopizza.com / admin123
+          </div>
         </CardContent>
       </Card>
     </div>

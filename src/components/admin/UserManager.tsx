@@ -6,45 +6,46 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Trash2, Eye, Users, Shield } from 'lucide-react';
+import { Plus, Trash2, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface Admin {
+interface Usuario {
   id: string;
-  user_id: string;
+  email: string;
   nome: string;
+  ativo: boolean;
   created_at: string;
 }
 
 export const UserManager = () => {
-  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
-    password: ''
+    senha: ''
   });
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchAdmins();
+    fetchUsuarios();
   }, []);
 
-  const fetchAdmins = async () => {
+  const fetchUsuarios = async () => {
     try {
       const { data, error } = await supabase
-        .from('admins')
-        .select('*')
+        .from('usuarios')
+        .select('id, email, nome, ativo, created_at')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setAdmins(data || []);
+      setUsuarios(data || []);
     } catch (error) {
-      console.error('Erro ao carregar administradores:', error);
+      console.error('Erro ao carregar usuários:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível carregar a lista de administradores.",
+        description: "Não foi possível carregar a lista de usuários.",
         variant: "destructive",
       });
     } finally {
@@ -55,41 +56,56 @@ export const UserManager = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const { error } = await supabase
+        .from('usuarios')
+        .insert({
+          nome: formData.nome,
+          email: formData.email,
+          senha: formData.senha,
+          ativo: true
+        });
+
+      if (error) throw error;
+
       toast({
-        title: "Informação",
-        description: "Para adicionar novos administradores, crie o usuário no painel do Supabase Auth primeiro.",
+        title: "Sucesso",
+        description: "Usuário criado com sucesso!",
       });
+      
+      setFormData({ nome: '', email: '', senha: '' });
       setDialogOpen(false);
-    } catch (error) {
-      console.error('Erro ao criar administrador:', error);
+      fetchUsuarios();
+    } catch (error: any) {
+      console.error('Erro ao criar usuário:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar o administrador.",
+        description: error.message || "Não foi possível criar o usuário.",
         variant: "destructive",
       });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja remover este administrador?')) return;
+    if (!confirm('Tem certeza que deseja remover este usuário?')) return;
 
     try {
       const { error } = await supabase
-        .from('admins')
+        .from('usuarios')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+      
       toast({
         title: "Sucesso",
-        description: "Administrador removido com sucesso!",
+        description: "Usuário removido com sucesso!",
       });
-      fetchAdmins();
+      fetchUsuarios();
     } catch (error) {
-      console.error('Erro ao excluir administrador:', error);
+      console.error('Erro ao excluir usuário:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível remover o administrador.",
+        description: "Não foi possível remover o usuário.",
         variant: "destructive",
       });
     }
@@ -109,7 +125,7 @@ export const UserManager = () => {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-white flex items-center">
-              <Users className="mr-2" size={20} />
+              <Shield className="mr-2" size={20} />
               Gerenciar Usuários Administradores
             </CardTitle>
           </div>
@@ -117,12 +133,12 @@ export const UserManager = () => {
             <DialogTrigger asChild>
               <Button className="bg-orange-600 hover:bg-orange-700">
                 <Plus className="mr-2" size={16} />
-                Adicionar Admin
+                Adicionar Usuário
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-gray-800 border-gray-700">
               <DialogHeader>
-                <DialogTitle className="text-white">Adicionar Administrador</DialogTitle>
+                <DialogTitle className="text-white">Adicionar Usuário</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -130,7 +146,7 @@ export const UserManager = () => {
                   <Input
                     value={formData.nome}
                     onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                    placeholder="Nome do administrador"
+                    placeholder="Nome do usuário"
                     required
                     className="bg-gray-700 border-gray-600 text-white"
                   />
@@ -150,21 +166,16 @@ export const UserManager = () => {
                   <label className="text-gray-300 text-sm">Senha</label>
                   <Input
                     type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                    value={formData.senha}
+                    onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
                     placeholder="Senha"
                     required
                     className="bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
-                <div className="bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded">
-                  <p className="text-sm">
-                    <strong>Instruções:</strong> Para adicionar novos administradores, você deve primeiro criar o usuário no painel do Supabase Auth e depois executar o SQL para adicioná-lo à tabela de admins.
-                  </p>
-                </div>
                 <div className="flex gap-2">
                   <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
-                    Ver Instruções
+                    Criar Usuário
                   </Button>
                   <Button 
                     type="button" 
@@ -182,23 +193,26 @@ export const UserManager = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {admins.map((admin) => (
-            <div key={admin.id} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg border border-gray-600">
+          {usuarios.map((usuario) => (
+            <div key={usuario.id} className="flex items-center justify-between p-4 bg-gray-700 rounded-lg border border-gray-600">
               <div className="flex items-center space-x-4">
                 <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center">
                   <Shield className="text-white" size={20} />
                 </div>
                 <div>
-                  <h3 className="text-white font-medium">{admin.nome}</h3>
-                  <p className="text-gray-400 text-sm">Criado em: {formatDate(admin.created_at)}</p>
-                  <Badge className="bg-green-600 text-white mt-1">Administrador</Badge>
+                  <h3 className="text-white font-medium">{usuario.nome}</h3>
+                  <p className="text-gray-400 text-sm">{usuario.email}</p>
+                  <p className="text-gray-400 text-sm">Criado em: {formatDate(usuario.created_at)}</p>
+                  <Badge className={usuario.ativo ? "bg-green-600 text-white mt-1" : "bg-red-600 text-white mt-1"}>
+                    {usuario.ativo ? 'Ativo' : 'Inativo'}
+                  </Badge>
                 </div>
               </div>
               <div className="flex space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDelete(admin.id)}
+                  onClick={() => handleDelete(usuario.id)}
                   className="border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
                 >
                   <Trash2 size={14} />
@@ -206,9 +220,9 @@ export const UserManager = () => {
               </div>
             </div>
           ))}
-          {admins.length === 0 && (
+          {usuarios.length === 0 && (
             <div className="text-center py-8 text-gray-400">
-              Nenhum administrador encontrado.
+              Nenhum usuário encontrado.
             </div>
           )}
         </div>

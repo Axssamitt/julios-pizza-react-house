@@ -2,9 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { User } from '@supabase/supabase-js';
 import { LogOut, Pizza, Settings, FileText, Users, BarChart3, Home, Image, Instagram, Shield } from 'lucide-react';
 import { PizzaManager } from '@/components/admin/PizzaManager';
 import { ConfigManager } from '@/components/admin/ConfigManager';
@@ -16,34 +14,38 @@ import { CarouselManager } from '@/components/admin/CarouselManager';
 import { UserManager } from '@/components/admin/UserManager';
 import { InstagramManager } from '@/components/admin/InstagramManager';
 
+interface AdminUser {
+  id: string;
+  email: string;
+  nome: string;
+}
+
 const Admin = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
+    // Verificar se existe um usuário admin logado
+    const adminData = localStorage.getItem('admin_user');
+    if (adminData) {
+      try {
+        const user = JSON.parse(adminData);
+        setAdminUser(user);
+      } catch (error) {
+        console.error('Erro ao recuperar dados do admin:', error);
+        localStorage.removeItem('admin_user');
         navigate('/auth');
       }
-      setLoading(false);
-    });
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
-        navigate('/auth');
-      }
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    } else {
+      navigate('/auth');
+    }
+    setLoading(false);
   }, [navigate]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    localStorage.removeItem('admin_user');
+    setAdminUser(null);
     navigate('/');
   };
 
@@ -55,7 +57,7 @@ const Admin = () => {
     );
   }
 
-  if (!user) {
+  if (!adminUser) {
     return null;
   }
 
@@ -73,7 +75,7 @@ const Admin = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold">Júlio's Pizza House - Admin</h1>
-              <p className="text-gray-400 text-sm">{user.email}</p>
+              <p className="text-gray-400 text-sm">{adminUser.email}</p>
             </div>
           </div>
           <Button 
@@ -89,7 +91,7 @@ const Admin = () => {
 
       <main className="container mx-auto p-6">
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="bg-gray-800 border-gray-700 grid grid-cols-4 lg:grid-cols-8 gap-1">
+          <TabsList className="bg-gray-800 border-gray-700 grid grid-cols-4 lg:grid-cols-9 gap-1">
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-orange-600">
               <BarChart3 className="mr-2" size={16} />
               Dashboard

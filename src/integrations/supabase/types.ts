@@ -9,85 +9,61 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admins: {
-        Row: {
-          created_at: string
-          id: string
-          nome: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          nome: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          nome?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       carousel_images: {
         Row: {
-          active: boolean | null
+          ativo: boolean | null
           created_at: string
           id: string
-          image_url: string
-          order_index: number | null
-          title: string
+          ordem: number | null
+          titulo: string
           updated_at: string
+          url_imagem: string
         }
         Insert: {
-          active?: boolean | null
+          ativo?: boolean | null
           created_at?: string
           id?: string
-          image_url: string
-          order_index?: number | null
-          title: string
+          ordem?: number | null
+          titulo: string
           updated_at?: string
+          url_imagem: string
         }
         Update: {
-          active?: boolean | null
+          ativo?: boolean | null
           created_at?: string
           id?: string
-          image_url?: string
-          order_index?: number | null
-          title?: string
+          ordem?: number | null
+          titulo?: string
           updated_at?: string
+          url_imagem?: string
         }
         Relationships: []
       }
       configuracoes: {
         Row: {
-          ativo: boolean | null
+          ativo: boolean
+          chave: string
           created_at: string
+          descricao: string | null
           id: string
-          label: string
-          ordem: number | null
-          tipo: string
           updated_at: string
           valor: string
         }
         Insert: {
-          ativo?: boolean | null
+          ativo?: boolean
+          chave: string
           created_at?: string
+          descricao?: string | null
           id?: string
-          label: string
-          ordem?: number | null
-          tipo: string
           updated_at?: string
           valor: string
         }
         Update: {
-          ativo?: boolean | null
+          ativo?: boolean
+          chave?: string
           created_at?: string
+          descricao?: string | null
           id?: string
-          label?: string
-          ordem?: number | null
-          tipo?: string
           updated_at?: string
           valor?: string
         }
@@ -106,8 +82,11 @@ export type Database = {
           observacoes: string | null
           quantidade_adultos: number
           quantidade_criancas: number | null
-          status: string | null
+          status: string
           telefone: string
+          updated_at: string
+          valor_entrada: number | null
+          valor_total: number | null
         }
         Insert: {
           cpf: string
@@ -121,8 +100,11 @@ export type Database = {
           observacoes?: string | null
           quantidade_adultos: number
           quantidade_criancas?: number | null
-          status?: string | null
+          status?: string
           telefone: string
+          updated_at?: string
+          valor_entrada?: number | null
+          valor_total?: number | null
         }
         Update: {
           cpf?: string
@@ -136,65 +118,76 @@ export type Database = {
           observacoes?: string | null
           quantidade_adultos?: number
           quantidade_criancas?: number | null
-          status?: string | null
+          status?: string
           telefone?: string
+          updated_at?: string
+          valor_entrada?: number | null
+          valor_total?: number | null
         }
         Relationships: []
       }
       home_config: {
         Row: {
-          hero_subtitle: string
-          hero_title: string
+          atualizado_por: string | null
           id: string
+          subtitulo_hero: string
+          titulo_hero: string
           updated_at: string
-          updated_by: string | null
         }
         Insert: {
-          hero_subtitle?: string
-          hero_title?: string
+          atualizado_por?: string | null
           id?: string
+          subtitulo_hero?: string
+          titulo_hero?: string
           updated_at?: string
-          updated_by?: string | null
         }
         Update: {
-          hero_subtitle?: string
-          hero_title?: string
+          atualizado_por?: string | null
           id?: string
+          subtitulo_hero?: string
+          titulo_hero?: string
           updated_at?: string
-          updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "home_config_atualizado_por_fkey"
+            columns: ["atualizado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       instagram_posts: {
         Row: {
-          active: boolean
+          ativo: boolean | null
           created_at: string
           id: string
-          image_url: string
-          order_index: number
-          post_url: string
-          title: string
+          ordem: number | null
+          titulo: string
           updated_at: string
+          url_imagem: string
+          url_post: string
         }
         Insert: {
-          active?: boolean
+          ativo?: boolean | null
           created_at?: string
           id?: string
-          image_url: string
-          order_index?: number
-          post_url: string
-          title: string
+          ordem?: number | null
+          titulo: string
           updated_at?: string
+          url_imagem: string
+          url_post: string
         }
         Update: {
-          active?: boolean
+          ativo?: boolean | null
           created_at?: string
           id?: string
-          image_url?: string
-          order_index?: number
-          post_url?: string
-          title?: string
+          ordem?: number | null
+          titulo?: string
           updated_at?: string
+          url_imagem?: string
+          url_post?: string
         }
         Relationships: []
       }
@@ -203,7 +196,7 @@ export type Database = {
           created_at: string
           id: string
           ip_address: unknown | null
-          page_path: string
+          pagina: string
           referrer: string | null
           session_id: string | null
           user_agent: string | null
@@ -212,7 +205,7 @@ export type Database = {
           created_at?: string
           id?: string
           ip_address?: unknown | null
-          page_path: string
+          pagina: string
           referrer?: string | null
           session_id?: string | null
           user_agent?: string | null
@@ -221,7 +214,7 @@ export type Database = {
           created_at?: string
           id?: string
           ip_address?: unknown | null
-          page_path?: string
+          pagina?: string
           referrer?: string | null
           session_id?: string | null
           user_agent?: string | null
@@ -257,6 +250,36 @@ export type Database = {
           ingredientes?: string
           nome?: string
           ordem?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      usuarios: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          senha: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          senha: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          senha?: string
           updated_at?: string
         }
         Relationships: []
