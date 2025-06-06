@@ -5,14 +5,14 @@ import { HeroCarousel } from './HeroCarousel';
 import { supabase } from '@/integrations/supabase/client';
 
 interface HomeConfig {
-  hero_title: string;
-  hero_subtitle: string;
+  titulo_hero: string;
+  subtitulo_hero: string;
 }
 
 export const Hero = () => {
   const [config, setConfig] = useState<HomeConfig>({
-    hero_title: 'As Melhores Pizzas de Londrina',
-    hero_subtitle: 'Sabor autêntico que vai até você. Pizzas artesanais feitas com ingredientes frescos e muito amor.'
+    titulo_hero: 'As Melhores Pizzas de Londrina',
+    subtitulo_hero: 'Sabor autêntico que vai até você. Pizzas artesanais feitas com ingredientes frescos e muito amor.'
   });
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export const Hero = () => {
       try {
         const { data, error } = await supabase
           .from('home_config')
-          .select('hero_title, hero_subtitle')
+          .select('titulo_hero, subtitulo_hero')
           .limit(1)
           .single();
         
@@ -43,11 +43,11 @@ export const Hero = () => {
           <div className="flex-1 text-center lg:text-left">
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
               <span className="bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent">
-                {config.hero_title}
+                {config.titulo_hero}
               </span>
             </h2>
             <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl">
-              {config.hero_subtitle}
+              {config.subtitulo_hero}
             </p>
 
             {/* Info Cards */}

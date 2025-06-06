@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface AnalyticsData {
   id: string;
-  page_path: string;
+  pagina: string;
   user_agent: string;
   ip_address: unknown;
   referrer: string;

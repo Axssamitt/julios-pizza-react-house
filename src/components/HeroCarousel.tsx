@@ -6,9 +6,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface CarouselImage {
   id: string;
-  title: string;
-  image_url: string;
-  order_index: number;
+  titulo: string;
+  url_imagem: string;
+  ordem: number;
 }
 
 export const HeroCarousel = () => {
@@ -21,8 +21,8 @@ export const HeroCarousel = () => {
         const { data, error } = await supabase
           .from('carousel_images')
           .select('*')
-          .eq('active', true)
-          .order('order_index');
+          .eq('ativo', true)
+          .order('ordem');
         
         if (error) throw error;
         setImages(data || []);
@@ -61,12 +61,12 @@ export const HeroCarousel = () => {
               <CardContent className="p-2">
                 <div className="aspect-square relative overflow-hidden rounded-lg">
                   <img
-                    src={image.image_url}
-                    alt={image.title}
+                    src={image.url_imagem}
+                    alt={image.titulo}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                    <h3 className="text-white font-semibold text-sm">{image.title}</h3>
+                    <h3 className="text-white font-semibold text-sm">{image.titulo}</h3>
                   </div>
                 </div>
               </CardContent>

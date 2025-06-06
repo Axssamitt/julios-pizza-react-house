@@ -10,7 +10,7 @@ export const useAnalytics = (pagePath: string) => {
         const sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         
         await supabase.from('page_analytics').insert({
-          page_path: pagePath,
+          pagina: pagePath,
           user_agent: navigator.userAgent,
           referrer: document.referrer || null,
           session_id: sessionId

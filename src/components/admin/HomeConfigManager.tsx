@@ -10,8 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 
 interface HomeConfig {
   id: string;
-  hero_title: string;
-  hero_subtitle: string;
+  titulo_hero: string;
+  subtitulo_hero: string;
 }
 
 export const HomeConfigManager = () => {
@@ -19,8 +19,8 @@ export const HomeConfigManager = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    hero_title: 'As Melhores Pizzas de Londrina',
-    hero_subtitle: 'Sabor autêntico que vai até você. Pizzas artesanais feitas com ingredientes frescos e muito amor.'
+    titulo_hero: 'As Melhores Pizzas de Londrina',
+    subtitulo_hero: 'Sabor autêntico que vai até você. Pizzas artesanais feitas com ingredientes frescos e muito amor.'
   });
   const { toast } = useToast();
 
@@ -43,8 +43,8 @@ export const HomeConfigManager = () => {
       if (data) {
         setConfig(data);
         setFormData({
-          hero_title: data.hero_title,
-          hero_subtitle: data.hero_subtitle
+          titulo_hero: data.titulo_hero,
+          subtitulo_hero: data.subtitulo_hero
         });
       }
     } catch (error) {
@@ -64,17 +64,14 @@ export const HomeConfigManager = () => {
     setSaving(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
       if (config) {
         // Atualizar configuração existente
         const { error } = await supabase
           .from('home_config')
           .update({
-            hero_title: formData.hero_title,
-            hero_subtitle: formData.hero_subtitle,
-            updated_at: new Date().toISOString(),
-            updated_by: user?.id
+            titulo_hero: formData.titulo_hero,
+            subtitulo_hero: formData.subtitulo_hero,
+            updated_at: new Date().toISOString()
           })
           .eq('id', config.id);
 
@@ -84,9 +81,8 @@ export const HomeConfigManager = () => {
         const { data, error } = await supabase
           .from('home_config')
           .insert({
-            hero_title: formData.hero_title,
-            hero_subtitle: formData.hero_subtitle,
-            updated_by: user?.id
+            titulo_hero: formData.titulo_hero,
+            subtitulo_hero: formData.subtitulo_hero
           })
           .select()
           .single();
@@ -138,22 +134,22 @@ export const HomeConfigManager = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="hero_title" className="text-gray-300">Título Principal</Label>
+            <Label htmlFor="titulo_hero" className="text-gray-300">Título Principal</Label>
             <Input
-              id="hero_title"
-              value={formData.hero_title}
-              onChange={(e) => setFormData(prev => ({ ...prev, hero_title: e.target.value }))}
+              id="titulo_hero"
+              value={formData.titulo_hero}
+              onChange={(e) => setFormData(prev => ({ ...prev, titulo_hero: e.target.value }))}
               placeholder="As Melhores Pizzas de Londrina"
               required
               className="bg-gray-700 border-gray-600 text-white"
             />
           </div>
           <div>
-            <Label htmlFor="hero_subtitle" className="text-gray-300">Subtítulo</Label>
+            <Label htmlFor="subtitulo_hero" className="text-gray-300">Subtítulo</Label>
             <Textarea
-              id="hero_subtitle"
-              value={formData.hero_subtitle}
-              onChange={(e) => setFormData(prev => ({ ...prev, hero_subtitle: e.target.value }))}
+              id="subtitulo_hero"
+              value={formData.subtitulo_hero}
+              onChange={(e) => setFormData(prev => ({ ...prev, subtitulo_hero: e.target.value }))}
               placeholder="Sabor autêntico que vai até você. Pizzas artesanais feitas com ingredientes frescos e muito amor."
               required
               rows={3}
