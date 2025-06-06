@@ -5,11 +5,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 interface AnalyticsData {
   id: string;
-  page_path: string;
-  user_agent: string;
+  pagina: string;
+  user_agent: string | null;
   ip_address: unknown;
-  referrer: string;
-  session_id: string;
+  referrer: string | null;
+  session_id: string | null;
   created_at: string;
 }
 
@@ -39,7 +39,7 @@ export const RecentAccessTable = ({ analytics }: RecentAccessTableProps) => {
           <TableBody>
             {analytics.slice(0, 20).map((item) => (
               <TableRow key={item.id} className="border-gray-700">
-                <TableCell className="text-white">{item.page_path}</TableCell>
+                <TableCell className="text-white">{item.pagina}</TableCell>
                 <TableCell className="text-gray-300">
                   {new Date(item.created_at).toLocaleString('pt-BR')}
                 </TableCell>

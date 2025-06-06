@@ -9,11 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 
 interface Config {
   id: string;
-  tipo: string;
-  label: string;
+  chave: string;
   valor: string;
+  descricao: string | null;
   ativo: boolean;
-  ordem: number;
 }
 
 export const ConfigManager = () => {
@@ -21,9 +20,9 @@ export const ConfigManager = () => {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newConfig, setNewConfig] = useState({
-    tipo: 'contato',
-    label: '',
-    valor: ''
+    chave: '',
+    valor: '',
+    descricao: ''
   });
   const [showAddForm, setShowAddForm] = useState(false);
   const { toast } = useToast();
@@ -37,8 +36,7 @@ export const ConfigManager = () => {
       const { data, error } = await supabase
         .from('configuracoes')
         .select('*')
-        .order('tipo', { ascending: true })
-        .order('ordem', { ascending: true });
+        .order('chave', { ascending: true });
 
       if (error) throw error;
       setConfigs(data || []);
@@ -55,7 +53,7 @@ export const ConfigManager = () => {
   };
 
   const handleAdd = async () => {
-    if (!newConfig.label || !newConfig.valor) {
+    if (!newConfig.chave || !newConfig.valor) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios.",
@@ -68,13 +66,14 @@ export const ConfigManager = () => {
       const { error } = await supabase
         .from('configuracoes')
         .insert([{
-          ...newConfig,
-          ordem: configs.filter(c => c.tipo === newConfig.tipo).length
+          chave: newConfig.chave,
+          valor: newConfig.valor,
+          descricao: newConfig.descricao || null
         }]);
 
       if (error) throw error;
 
-      setNewConfig({ tipo: 'contato', label: '', valor: '' });
+      setNewConfig({ chave: '', valor: '', descricao: '' });
       setShowAddForm(false);
       toast({
         title: "Sucesso",
@@ -148,8 +147,11 @@ export const ConfigManager = () => {
     );
   }
 
-  const contatos = configs.filter(c => c.tipo === 'contato');
-  const localizacoes = configs.filter(c => c.tipo === 'localizacao');
+  const configuracoesPorTipo = {
+    whatsapp: configs.filter(c => c.chave.includes('whatsapp')),
+    valores: configs.filter(c => c.chave.includes('valor') || c.chave.includes('percentual')),
+    outras: configs.filter(c => !c.chave.includes('whatsapp') && !c.chave.includes('valor') && !c.chave.includes('percentual'))
+  };
 
   return (
     <div className="space-y-6">
@@ -170,24 +172,22 @@ export const ConfigManager = () => {
             <CardTitle className="text-white">Nova Configuração</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <select
-              value={newConfig.tipo}
-              onChange={(e) => setNewConfig({ ...newConfig, tipo: e.target.value })}
-              className="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white"
-            >
-              <option value="contato">Contato</option>
-              <option value="localizacao">Localização</option>
-            </select>
             <Input
-              placeholder="Label (ex: Telefone, Endereço)"
-              value={newConfig.label}
-              onChange={(e) => setNewConfig({ ...newConfig, label: e.target.value })}
+              placeholder="Chave (ex: whatsapp_numero)"
+              value={newConfig.chave}
+              onChange={(e) => setNewConfig({ ...newConfig, chave: e.target.value })}
               className="bg-gray-700 border-gray-600 text-white"
             />
             <Input
               placeholder="Valor"
               value={newConfig.valor}
               onChange={(e) => setNewConfig({ ...newConfig, valor: e.target.value })}
+              className="bg-gray-700 border-gray-600 text-white"
+            />
+            <Input
+              placeholder="Descrição (opcional)"
+              value={newConfig.descricao}
+              onChange={(e) => setNewConfig({ ...newConfig, descricao: e.target.value })}
               className="bg-gray-700 border-gray-600 text-white"
             />
             <div className="flex space-x-2">
@@ -208,13 +208,13 @@ export const ConfigManager = () => {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-orange-400">Informações de Contato</CardTitle>
+            <CardTitle className="text-orange-400">WhatsApp</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {contatos.map((config) => (
+            {configuracoesPorTipo.whatsapp.map((config) => (
               <ConfigItem 
                 key={config.id} 
                 config={config} 
@@ -224,18 +224,15 @@ export const ConfigManager = () => {
                 onDelete={handleDelete}
               />
             ))}
-            {contatos.length === 0 && (
-              <p className="text-gray-400 text-center py-4">Nenhuma configuração de contato encontrada.</p>
-            )}
           </CardContent>
         </Card>
 
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-orange-400">Informações de Localização</CardTitle>
+            <CardTitle className="text-orange-400">Valores</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {localizacoes.map((config) => (
+            {configuracoesPorTipo.valores.map((config) => (
               <ConfigItem 
                 key={config.id} 
                 config={config} 
@@ -245,9 +242,24 @@ export const ConfigManager = () => {
                 onDelete={handleDelete}
               />
             ))}
-            {localizacoes.length === 0 && (
-              <p className="text-gray-400 text-center py-4">Nenhuma configuração de localização encontrada.</p>
-            )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-orange-400">Outras Configurações</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {configuracoesPorTipo.outras.map((config) => (
+              <ConfigItem 
+                key={config.id} 
+                config={config} 
+                editingId={editingId}
+                onEdit={setEditingId}
+                onUpdate={handleUpdate}
+                onDelete={handleDelete}
+              />
+            ))}
           </CardContent>
         </Card>
       </div>
@@ -269,8 +281,9 @@ const ConfigItem = ({
   onDelete: (id: string) => void;
 }) => {
   const [formData, setFormData] = useState({
-    label: config.label,
+    chave: config.chave,
     valor: config.valor,
+    descricao: config.descricao || '',
     ativo: config.ativo
   });
 
@@ -278,14 +291,22 @@ const ConfigItem = ({
     return (
       <div className="space-y-2 p-3 border border-gray-600 rounded">
         <Input
-          value={formData.label}
-          onChange={(e) => setFormData({ ...formData, label: e.target.value })}
+          value={formData.chave}
+          onChange={(e) => setFormData({ ...formData, chave: e.target.value })}
           className="bg-gray-700 border-gray-600 text-white"
+          placeholder="Chave"
         />
         <Input
           value={formData.valor}
           onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
           className="bg-gray-700 border-gray-600 text-white"
+          placeholder="Valor"
+        />
+        <Input
+          value={formData.descricao}
+          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+          className="bg-gray-700 border-gray-600 text-white"
+          placeholder="Descrição"
         />
         <div className="flex items-center space-x-2">
           <input
@@ -294,7 +315,7 @@ const ConfigItem = ({
             onChange={(e) => setFormData({ ...formData, ativo: e.target.checked })}
             className="rounded"
           />
-          <label className="text-white text-sm">Mostrar na página inicial</label>
+          <label className="text-white text-sm">Ativo</label>
         </div>
         <div className="flex space-x-2">
           <Button 
@@ -329,8 +350,11 @@ const ConfigItem = ({
           className="rounded"
         />
         <div>
-          <p className="text-white font-medium">{config.label}</p>
+          <p className="text-white font-medium">{config.chave}</p>
           <p className="text-gray-400 text-sm">{config.valor}</p>
+          {config.descricao && (
+            <p className="text-gray-500 text-xs">{config.descricao}</p>
+          )}
         </div>
       </div>
       <div className="flex space-x-2">

@@ -12,10 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 
 interface CarouselImage {
   id: string;
-  title: string;
-  image_url: string;
-  order_index: number;
-  active: boolean;
+  titulo: string;
+  url_imagem: string;
+  ordem: number;
+  ativo: boolean;
 }
 
 export const CarouselManager = () => {
@@ -24,8 +24,8 @@ export const CarouselManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingImage, setEditingImage] = useState<CarouselImage | null>(null);
   const [formData, setFormData] = useState({
-    title: '',
-    image_url: ''
+    titulo: '',
+    url_imagem: ''
   });
   const { toast } = useToast();
 
@@ -38,7 +38,7 @@ export const CarouselManager = () => {
       const { data, error } = await supabase
         .from('carousel_images')
         .select('*')
-        .order('order_index');
+        .order('ordem');
       
       if (error) throw error;
       setImages(data || []);
@@ -57,14 +57,14 @@ export const CarouselManager = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const nextOrderIndex = Math.max(...images.map(img => img.order_index), 0) + 1;
+      const nextOrderIndex = Math.max(...images.map(img => img.ordem), 0) + 1;
       
       if (editingImage) {
         const { error } = await supabase
           .from('carousel_images')
           .update({
-            title: formData.title,
-            image_url: formData.image_url,
+            titulo: formData.titulo,
+            url_imagem: formData.url_imagem,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingImage.id);
@@ -78,10 +78,10 @@ export const CarouselManager = () => {
         const { error } = await supabase
           .from('carousel_images')
           .insert({
-            title: formData.title,
-            image_url: formData.image_url,
-            order_index: nextOrderIndex,
-            active: true
+            titulo: formData.titulo,
+            url_imagem: formData.url_imagem,
+            ordem: nextOrderIndex,
+            ativo: true
           });
 
         if (error) throw error;
@@ -91,7 +91,7 @@ export const CarouselManager = () => {
         });
       }
 
-      setFormData({ title: '', image_url: '' });
+      setFormData({ titulo: '', url_imagem: '' });
       setEditingImage(null);
       setDialogOpen(false);
       fetchImages();
@@ -130,11 +130,11 @@ export const CarouselManager = () => {
     }
   };
 
-  const handleToggleActive = async (id: string, active: boolean) => {
+  const handleToggleActive = async (id: string, ativo: boolean) => {
     try {
       const { error } = await supabase
         .from('carousel_images')
-        .update({ active: !active })
+        .update({ ativo: !ativo })
         .eq('id', id);
 
       if (error) throw error;
@@ -150,13 +150,13 @@ export const CarouselManager = () => {
 
     const otherImages = images.filter(img => img.id !== id);
     const targetOrder = direction === 'up' 
-      ? Math.max(...otherImages.filter(img => img.order_index < currentImage.order_index).map(img => img.order_index), 0)
-      : Math.min(...otherImages.filter(img => img.order_index > currentImage.order_index).map(img => img.order_index), currentImage.order_index + 1);
+      ? Math.max(...otherImages.filter(img => img.ordem < currentImage.ordem).map(img => img.ordem), 0)
+      : Math.min(...otherImages.filter(img => img.ordem > currentImage.ordem).map(img => img.ordem), currentImage.ordem + 1);
 
     try {
       const { error } = await supabase
         .from('carousel_images')
-        .update({ order_index: targetOrder })
+        .update({ ordem: targetOrder })
         .eq('id', id);
 
       if (error) throw error;
@@ -186,7 +186,7 @@ export const CarouselManager = () => {
                 className="bg-orange-600 hover:bg-orange-700"
                 onClick={() => {
                   setEditingImage(null);
-                  setFormData({ title: '', image_url: '' });
+                  setFormData({ titulo: '', url_imagem: '' });
                 }}
               >
                 <Plus className="mr-2" size={16} />
@@ -204,22 +204,22 @@ export const CarouselManager = () => {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="title" className="text-gray-300">Título</Label>
+                  <Label htmlFor="titulo" className="text-gray-300">Título</Label>
                   <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    id="titulo"
+                    value={formData.titulo}
+                    onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
                     placeholder="Título da imagem"
                     required
                     className="bg-gray-700 border-gray-600 text-white"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="image_url" className="text-gray-300">URL da Imagem</Label>
+                  <Label htmlFor="url_imagem" className="text-gray-300">URL da Imagem</Label>
                   <Input
-                    id="image_url"
-                    value={formData.image_url}
-                    onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
+                    id="url_imagem"
+                    value={formData.url_imagem}
+                    onChange={(e) => setFormData(prev => ({ ...prev, url_imagem: e.target.value }))}
                     placeholder="https://exemplo.com/imagem.jpg"
                     required
                     className="bg-gray-700 border-gray-600 text-white"
@@ -262,23 +262,23 @@ export const CarouselManager = () => {
               <TableRow key={image.id} className="border-gray-700">
                 <TableCell>
                   <img 
-                    src={image.image_url} 
-                    alt={image.title}
+                    src={image.url_imagem} 
+                    alt={image.titulo}
                     className="w-16 h-16 object-cover rounded"
                   />
                 </TableCell>
-                <TableCell className="text-white">{image.title}</TableCell>
+                <TableCell className="text-white">{image.titulo}</TableCell>
                 <TableCell>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleToggleActive(image.id, image.active)}
-                    className={image.active ? 
+                    onClick={() => handleToggleActive(image.id, image.ativo)}
+                    className={image.ativo ? 
                       "border-green-500 text-green-400 hover:bg-green-500 hover:text-white" : 
                       "border-gray-500 text-gray-400 hover:bg-gray-500 hover:text-white"
                     }
                   >
-                    {image.active ? 'Ativo' : 'Inativo'}
+                    {image.ativo ? 'Ativo' : 'Inativo'}
                   </Button>
                 </TableCell>
                 <TableCell className="text-white">
@@ -309,8 +309,8 @@ export const CarouselManager = () => {
                       onClick={() => {
                         setEditingImage(image);
                         setFormData({
-                          title: image.title,
-                          image_url: image.image_url
+                          titulo: image.titulo,
+                          url_imagem: image.url_imagem
                         });
                         setDialogOpen(true);
                       }}
