@@ -28,6 +28,8 @@ const Auth = () => {
     setLoading(true);
     setError('');
 
+    console.log('Tentando fazer login com:', { email, password });
+
     try {
       // Buscar usuário na tabela usuarios
       const { data: usuarios, error: queryError } = await supabase
@@ -35,25 +37,32 @@ const Auth = () => {
         .select('*')
         .eq('email', email)
         .eq('senha', password)
-        .eq('ativo', true)
-        .limit(1);
+        .eq('ativo', true);
+
+      console.log('Resultado da consulta:', { usuarios, queryError });
 
       if (queryError) {
-        throw new Error('Erro ao verificar credenciais');
+        console.error('Erro na consulta:', queryError);
+        throw new Error('Erro ao verificar credenciais: ' + queryError.message);
       }
 
       if (!usuarios || usuarios.length === 0) {
+        console.log('Nenhum usuário encontrado com essas credenciais');
         throw new Error('Email ou senha incorretos');
       }
 
       const usuario = usuarios[0];
+      console.log('Usuário encontrado:', usuario);
 
       // Salvar dados do usuário no localStorage
-      localStorage.setItem('admin_user', JSON.stringify({
+      const adminUserData = {
         id: usuario.id,
         email: usuario.email,
         nome: usuario.nome
-      }));
+      };
+
+      localStorage.setItem('admin_user', JSON.stringify(adminUserData));
+      console.log('Dados salvos no localStorage:', adminUserData);
 
       toast({
         title: "Sucesso",
@@ -62,6 +71,7 @@ const Auth = () => {
 
       navigate('/admin');
     } catch (error: any) {
+      console.error('Erro no login:', error);
       setError(error.message);
       toast({
         title: "Erro",

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, Utensils } from 'lucide-react';
+import { MapPin, Utensils } from 'lucide-react';
 import { HeroCarousel } from './HeroCarousel';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,7 +12,7 @@ interface HomeConfig {
 export const Hero = () => {
   const [config, setConfig] = useState<HomeConfig>({
     titulo_hero: 'As Melhores Pizzas de Londrina',
-    subtitulo_hero: 'Sabor autêntico que vai até você. Pizzas artesanais feitas com ingredientes frescos e muito amor.'
+    subtitulo_hero: 'Sabor autêntico para seus eventos. Buffet de pizzas artesanais feitas com ingredientes frescos e muito amor.'
   });
 
   useEffect(() => {
@@ -50,19 +50,15 @@ export const Hero = () => {
               {config.subtitulo_hero}
             </p>
 
-            {/* Info Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Info Cards - apenas localização e tipo de serviço */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex items-center justify-center lg:justify-start space-x-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
                 <MapPin className="text-orange-400" size={24} />
                 <span className="text-gray-300">Londrina-PR</span>
               </div>
               <div className="flex items-center justify-center lg:justify-start space-x-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <Clock className="text-orange-400" size={24} />
-                <span className="text-gray-300">18:00 - 23:00</span>
-              </div>
-              <div className="flex items-center justify-center lg:justify-start space-x-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
                 <Utensils className="text-orange-400" size={24} />
-                <span className="text-gray-300">Delivery Grátis</span>
+                <span className="text-gray-300">Buffet para Eventos</span>
               </div>
             </div>
           </div>
