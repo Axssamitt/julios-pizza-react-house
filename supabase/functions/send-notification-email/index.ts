@@ -28,6 +28,25 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const formData: NotificationEmailRequest = await req.json();
 
+    // Criar mensagem para WhatsApp
+    const whatsappMessage = encodeURIComponent(
+      `🍕 *NOVO ORÇAMENTO - Julio's Pizza House*\n\n` +
+      `👤 *Cliente:* ${formData.nome_completo}\n` +
+      `📄 *CPF:* ${formData.cpf}\n` +
+      `📞 *Telefone:* ${formData.telefone}\n\n` +
+      `📅 *Data do Evento:* ${new Date(formData.data_evento).toLocaleDateString('pt-BR')}\n` +
+      `⏰ *Horário:* ${formData.horario}\n` +
+      `📍 *Local:* ${formData.endereco_evento}\n\n` +
+      `👥 *Pessoas:*\n` +
+      `• Adultos: ${formData.quantidade_adultos}\n` +
+      `• Crianças: ${formData.quantidade_criancas}\n` +
+      `• Total: ${formData.quantidade_adultos + formData.quantidade_criancas} pessoas\n\n` +
+      `💬 Entre em contato com o cliente para finalizar o orçamento!`
+    );
+
+    // Link para WhatsApp (usando número da empresa)
+    const whatsappLink = `https://wa.me/5543991267766?text=${whatsappMessage}`;
+
     const emailResponse = await resend.emails.send({
       from: "Julio's Pizza House <onboarding@resend.dev>",
       to: ["jsrmturk@gmail.com"],
@@ -51,6 +70,20 @@ const handler = async (req: Request): Promise<Response> => {
             <p><strong>Adultos:</strong> ${formData.quantidade_adultos}</p>
             <p><strong>Crianças:</strong> ${formData.quantidade_criancas}</p>
             <p><strong>Total de Pessoas:</strong> ${formData.quantidade_adultos + formData.quantidade_criancas}</p>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${whatsappLink}" 
+               style="background-color: #25D366; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; margin: 10px;">
+              💬 Responder via WhatsApp
+            </a>
+          </div>
+
+          <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #25D366;">
+            <h3 style="color: #25D366; margin-top: 0;">📱 WhatsApp Direto</h3>
+            <p style="margin: 5px 0; font-size: 14px;">
+              Clique no botão acima para abrir o WhatsApp automaticamente com uma mensagem pré-formatada contendo todos os dados do orçamento.
+            </p>
           </div>
 
           <p style="text-align: center; color: #666; margin-top: 30px;">
