@@ -1,7 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
+
 // Utilizando a chave fornecida diretamente
 const resend = new Resend("re_eEknzuuQ_8BvHehKoxNRN5AtWy3cusn3z");
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type"
@@ -15,26 +17,42 @@ const handler = async (req)=>{
   try {
     const formData = await req.json();
     // Formatar telefone para formato internacional (WhatsApp)
-    function getWhatsAppNumber(phone) {
+    function getWhatsAppNumber(phone: string): string {
       const numbersOnly = phone.replace(/\D/g, "");
+      // Se já começar com 55 e tiver pelo menos 12 dígitos (ex: 5511999998888), mantém
       if (numbersOnly.startsWith("55") && numbersOnly.length >= 12) {
         return numbersOnly;
       } else if (numbersOnly.length === 11) {
+        // Ex: 11999998888 -> 5511999998888
         return "55" + numbersOnly;
       } else if (numbersOnly.length === 10) {
+        // Ex: 999998888 -> 5543999998888 (assume DDD 43)
         return "5543" + numbersOnly;
       }
-      return numbersOnly;
+      return numbersOnly; // fallback
     }
-    const whatsappMessage = encodeURIComponent(`🍕 *NOVO ORÇAMENTO - Julio's Pizza House*\n\n` + `👤 *Cliente:* ${formData.nome_completo}\n` + `📄 *CPF:* ${formData.cpf}\n` + `📞 *Telefone:* ${formData.telefone}\n\n` + `📅 *Data do Evento:* ${new Date(formData.data_evento).toLocaleDateString('pt-BR')}\n` + `⏰ *Horário:* ${formData.horario}\n` + `📍 *Local:* ${formData.endereco_evento}\n\n` + `👥 *Pessoas:*\n` + `• Adultos: ${formData.quantidade_adultos}\n` + `• Crianças: ${formData.quantidade_criancas}\n` + `• Total: ${formData.quantidade_adultos + formData.quantidade_criancas} pessoas\n\n` + `💬 Entre em contato com o cliente para finalizar o orçamento!`);
+
+    const whatsappMessage = encodeURIComponent(
+      `🍕 *NOVO ORÇAMENTO - Julio's Pizza House*\n\n` +
+      `👤 *Cliente:* ${formData.nome_completo}\n` +
+      `📄 *CPF:* ${formData.cpf}\n` +
+      `📞 *Telefone:* ${formData.telefone}\n\n` +
+      `📅 *Data do Evento:* ${new Date(formData.data_evento).toLocaleDateString('pt-BR')}\n` +
+      `⏰ *Horário:* ${formData.horario}\n` +
+      `📍 *Local:* ${formData.endereco_evento}\n\n` +
+      `👥 *Pessoas:*\n` +
+      `• Adultos: ${formData.quantidade_adultos}\n` +
+      `• Crianças: ${formData.quantidade_criancas}\n` +
+      `• Total: ${formData.quantidade_adultos + formData.quantidade_criancas} pessoas\n\n` +
+      `💬 Entre em contato com o cliente para finalizar o orçamento!`
+    );
+
     // Link para WhatsApp do solicitante
     const whatsappNumber = getWhatsAppNumber(formData.telefone);
     const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
     const emailResponse = await resend.emails.send({
       from: "Julio's Pizza House <onboarding@resend.dev>",
-      to: [
-        "juliospizzahouse@gmail.com"
-      ],
+      to: ["juliospizzahouse@gmail.com"],
       subject: "Novo Orçamento Recebido - Julio's Pizza House",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -101,3 +119,4 @@ const handler = async (req)=>{
   }
 };
 serve(handler);
+
