@@ -28,6 +28,23 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const formData: NotificationEmailRequest = await req.json();
 
+    // Formatar telefone para formato internacional (WhatsApp)
+    // Remove caracteres não numéricos e adiciona DDI '55' se não houver.
+    function getWhatsAppNumber(phone: string): string {
+      const numbersOnly = phone.replace(/\D/g, "");
+      // Se já começar com 55 e tiver pelo menos 12 dígitos (ex: 5511999998888), mantém
+      if (numbersOnly.startsWith("55") && numbersOnly.length >= 12) {
+        return numbersOnly;
+      } else if (numbersOnly.length === 11) {
+        // Ex: 11999998888 -> 5511999998888
+        return "55" + numbersOnly;
+      } else if (numbersOnly.length === 10) {
+        // Ex: 999998888 -> 5543999998888 (assume DDD 43)
+        return "5543" + numbersOnly;
+      }
+      return numbersOnly; // fallback
+    }
+
     // Criar mensagem para WhatsApp
     const whatsappMessage = encodeURIComponent(
       `🍕 *NOVO ORÇAMENTO - Julio's Pizza House*\n\n` +
@@ -44,8 +61,9 @@ const handler = async (req: Request): Promise<Response> => {
       `💬 Entre em contato com o cliente para finalizar o orçamento!`
     );
 
-    // Link para WhatsApp (usando número da empresa)
-    const whatsappLink = `https://wa.me/5543991267766?text=${whatsappMessage}`;
+    // Link para WhatsApp do solicitante
+    const whatsappNumber = getWhatsAppNumber(formData.telefone);
+    const whatsappLink = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
 
     const emailResponse = await resend.emails.send({
       from: "Julio's Pizza House <onboarding@resend.dev>",
@@ -75,14 +93,14 @@ const handler = async (req: Request): Promise<Response> => {
           <div style="text-align: center; margin: 30px 0;">
             <a href="${whatsappLink}" 
                style="background-color: #25D366; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block; margin: 10px;">
-              💬 Responder via WhatsApp
+              💬 Responder via WhatsApp do Solicitante
             </a>
           </div>
 
           <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #25D366;">
             <h3 style="color: #25D366; margin-top: 0;">📱 WhatsApp Direto</h3>
             <p style="margin: 5px 0; font-size: 14px;">
-              Clique no botão acima para abrir o WhatsApp automaticamente com uma mensagem pré-formatada contendo todos os dados do orçamento.
+              Clique no botão acima para abrir o WhatsApp automaticamente com o número do solicitante e uma mensagem pré-formatada contendo todos os dados do orçamento.
             </p>
           </div>
 
