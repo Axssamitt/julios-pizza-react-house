@@ -39,6 +39,45 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracao_email: {
+        Row: {
+          ativo: boolean
+          atualizado_em: string | null
+          criado_em: string | null
+          descricao: string
+          email_remetente: string
+          id: string
+          smtp_host: string
+          smtp_pass: string
+          smtp_port: number
+          smtp_user: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_em?: string | null
+          criado_em?: string | null
+          descricao: string
+          email_remetente: string
+          id?: string
+          smtp_host: string
+          smtp_pass: string
+          smtp_port: number
+          smtp_user: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_em?: string | null
+          criado_em?: string | null
+          descricao?: string
+          email_remetente?: string
+          id?: string
+          smtp_host?: string
+          smtp_pass?: string
+          smtp_port?: number
+          smtp_user?: string
+        }
+        Relationships: []
+      }
       configuracoes: {
         Row: {
           ativo: boolean
@@ -128,25 +167,67 @@ export type Database = {
       }
       home_config: {
         Row: {
+          align_subtitulo_hero: string | null
+          align_titulo_hero: string | null
           atualizado_por: string | null
+          endereco: string | null
+          facebook_url: string | null
           id: string
+          instagram_url: string | null
+          nome_empresa: string | null
           subtitulo_hero: string
+          telefone: string | null
+          texto_sobre: string | null
           titulo_hero: string
           updated_at: string
+          visivel_endereco: boolean | null
+          visivel_facebook: boolean | null
+          visivel_instagram: boolean | null
+          visivel_nome_empresa: boolean | null
+          visivel_sobre: boolean | null
+          visivel_telefone: boolean | null
         }
         Insert: {
+          align_subtitulo_hero?: string | null
+          align_titulo_hero?: string | null
           atualizado_por?: string | null
+          endereco?: string | null
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
+          nome_empresa?: string | null
           subtitulo_hero?: string
+          telefone?: string | null
+          texto_sobre?: string | null
           titulo_hero?: string
           updated_at?: string
+          visivel_endereco?: boolean | null
+          visivel_facebook?: boolean | null
+          visivel_instagram?: boolean | null
+          visivel_nome_empresa?: boolean | null
+          visivel_sobre?: boolean | null
+          visivel_telefone?: boolean | null
         }
         Update: {
+          align_subtitulo_hero?: string | null
+          align_titulo_hero?: string | null
           atualizado_por?: string | null
+          endereco?: string | null
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
+          nome_empresa?: string | null
           subtitulo_hero?: string
+          telefone?: string | null
+          texto_sobre?: string | null
           titulo_hero?: string
           updated_at?: string
+          visivel_endereco?: boolean | null
+          visivel_facebook?: boolean | null
+          visivel_instagram?: boolean | null
+          visivel_nome_empresa?: boolean | null
+          visivel_sobre?: boolean | null
+          visivel_telefone?: boolean | null
         }
         Relationships: [
           {
@@ -161,7 +242,10 @@ export type Database = {
       instagram_posts: {
         Row: {
           ativo: boolean | null
+          comentarios: number | null
           created_at: string
+          curtidas: number | null
+          descricao: string | null
           id: string
           ordem: number | null
           titulo: string
@@ -171,7 +255,10 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
+          comentarios?: number | null
           created_at?: string
+          curtidas?: number | null
+          descricao?: string | null
           id?: string
           ordem?: number | null
           titulo: string
@@ -181,7 +268,10 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
+          comentarios?: number | null
           created_at?: string
+          curtidas?: number | null
+          descricao?: string | null
           id?: string
           ordem?: number | null
           titulo?: string
@@ -230,6 +320,7 @@ export type Database = {
           ingredientes: string
           nome: string
           ordem: number | null
+          tipo: string | null
           updated_at: string
         }
         Insert: {
@@ -240,6 +331,7 @@ export type Database = {
           ingredientes: string
           nome: string
           ordem?: number | null
+          tipo?: string | null
           updated_at?: string
         }
         Update: {
@@ -250,6 +342,7 @@ export type Database = {
           ingredientes?: string
           nome?: string
           ordem?: number | null
+          tipo?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -262,6 +355,7 @@ export type Database = {
           id: string
           nome: string
           senha: string
+          tipo: string | null
           updated_at: string
         }
         Insert: {
@@ -271,6 +365,7 @@ export type Database = {
           id?: string
           nome: string
           senha: string
+          tipo?: string | null
           updated_at?: string
         }
         Update: {
@@ -280,6 +375,7 @@ export type Database = {
           id?: string
           nome?: string
           senha?: string
+          tipo?: string | null
           updated_at?: string
         }
         Relationships: []

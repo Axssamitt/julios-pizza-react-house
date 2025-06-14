@@ -1,9 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Download, Eye } from 'lucide-react';
+import { FileText, Download, Plus, Trash2 } from 'lucide-react';
+import { numberToWordsBrazilian } from '@/utils/supabaseStorage';
+import { jsPDF } from 'jspdf';
 
 interface Formulario {
   id: string;
@@ -19,6 +21,20 @@ interface Formulario {
   observacoes: string | null;
   status: string;
   created_at: string;
+  valor_entrada?: number | null;
+  itens_adicionais?: ItemAdicional[];
+}
+
+interface ItemAdicional {
+  id?: string;
+  descricao: string;
+  valor: number;
+  quantidade: number;
+}
+
+interface Config {
+  chave: string;
+  valor: string;
 }
 
 export const ContratoManager = () => {
@@ -26,10 +42,62 @@ export const ContratoManager = () => {
   const [selectedFormulario, setSelectedFormulario] = useState<Formulario | null>(null);
   const [contratoGerado, setContratoGerado] = useState<string>('');
   const [reciboGerado, setReciboGerado] = useState<string>('');
+  const [configs, setConfigs] = useState<Record<string, string>>({});
+  const [itensAdicionais, setItensAdicionais] = useState<ItemAdicional[]>([]);
+  const [novoItem, setNovoItem] = useState<ItemAdicional>({ descricao: '', valor: 0, quantidade: 1 });
+  const [valorEntradaEditavel, setValorEntradaEditavel] = useState<number | string>('');
 
   useEffect(() => {
     fetchFormularios();
+    fetchConfigs();
   }, []);
+
+  useEffect(() => {
+    if (selectedFormulario) {
+      const valorTotalCalculado = calcularValorTotal(selectedFormulario.quantidade_adultos, selectedFormulario.quantidade_criancas, itensAdicionais);
+      const entradaCalculada = calcularEntrada(valorTotalCalculado);
+
+      if (selectedFormulario.valor_entrada && selectedFormulario.valor_entrada > 0) {
+        setValorEntradaEditavel(selectedFormulario.valor_entrada.toFixed(2));
+      } else {
+        setValorEntradaEditavel(entradaCalculada.toFixed(2));
+      }
+    } else {
+      setValorEntradaEditavel('');
+    }
+  }, [selectedFormulario, configs, itensAdicionais]);
+
+  const handleSalvarValorEntrada = async () => {
+    if (!selectedFormulario || valorEntradaEditavel === '') {
+      console.error("Formulário não selecionado ou valor de entrada vazio.");
+      return;
+    }
+
+    const novoValorEntrada = parseFloat(String(valorEntradaEditavel));
+    if (isNaN(novoValorEntrada)) {
+      console.error("Valor de entrada inválido.");
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('formularios_contato')
+      .update({ valor_entrada: novoValorEntrada })
+      .eq('id', selectedFormulario.id)
+      .select();
+
+    if (error) {
+      console.error('Erro ao salvar valor da entrada:', error);
+    } else {
+      console.log('Valor da entrada salvo com sucesso:', data);
+      
+      setFormularios(prevFormularios => 
+        prevFormularios.map(f => 
+          f.id === selectedFormulario.id ? { ...f, valor_entrada: novoValorEntrada } : f
+        )
+      );
+      setSelectedFormulario(prev => prev ? { ...prev, valor_entrada: novoValorEntrada } : null);
+    }
+  };
 
   const fetchFormularios = async () => {
     const { data, error } = await supabase
@@ -43,173 +111,283 @@ export const ContratoManager = () => {
     }
   };
 
+  const fetchConfigs = async () => {
+    const { data, error } = await supabase
+      .from('configuracoes')
+      .select('chave, valor')
+      .eq('ativo', true);
+
+    if (!error && data) {
+      const configMap = data.reduce((acc: Record<string, string>, config: Config) => {
+        acc[config.chave] = config.valor;
+        return acc;
+      }, {});
+      setConfigs(configMap);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('pt-BR');
+    if (!dateStr) return '';
+
+    const parts = dateStr.split(/[-T:]/);
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+
+    const utcDate = new Date(Date.UTC(year, month, day));
+
+    return utcDate.toLocaleDateString('pt-BR', {
+      timeZone: 'UTC',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   };
 
   const formatTime = (timeStr: string) => {
     return timeStr.substring(0, 5);
   };
 
-  const calcularValorTotal = (adultos: number, criancas: number) => {
-    const valorAdulto = 55.00;
-    const valorCrianca = 27.00;
-    return (adultos * valorAdulto) + (criancas * valorCrianca);
+  const calcularValorTotal = (adultos: number, criancas: number, itensAdicionais: ItemAdicional[] = []) => {
+    const valorAdulto = parseFloat(configs.valor_adulto || '55.00');
+    const valorCrianca = parseFloat(configs.valor_crianca || '27.00');
+    const valorBase = (adultos * valorAdulto) + (criancas * valorCrianca);
+    const valorItens = itensAdicionais.reduce((acc, item) => acc + (item.valor * item.quantidade), 0);
+    return valorBase + valorItens;
   };
 
   const calcularEntrada = (valorTotal: number) => {
-    return valorTotal * 0.4; // 40% de entrada
+    const percentualEntrada = parseFloat(configs.percentual_entrada || '40') / 100;
+    return valorTotal * percentualEntrada;
+  };
+
+  const adicionarItem = () => {
+    if (novoItem.descricao && novoItem.valor > 0) {
+      setItensAdicionais([...itensAdicionais, { ...novoItem }]);
+      setNovoItem({ descricao: '', valor: 0, quantidade: 1 });
+    }
+  };
+
+  const removerItem = (index: number) => {
+    setItensAdicionais(itensAdicionais.filter((_, i) => i !== index));
   };
 
   const gerarContrato = (formulario: Formulario) => {
-    const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas);
-    const entrada = calcularEntrada(valorTotal);
-    const restante = valorTotal - entrada;
+    const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itensAdicionais);
+   
+    let entrada: number;
+    if (formulario.valor_entrada && formulario.valor_entrada > 0) {
+      entrada = formulario.valor_entrada;
+    } else {
+      entrada = calcularEntrada(valorTotal); 
+    }
     
-    const contrato = `JULIO'S PIZZA HOUSE
+    const restante = valorTotal - entrada;
+    const valorAdulto = parseFloat(configs.valor_adulto || '55.00');
+    const valorCrianca = parseFloat(configs.valor_crianca || '27.00');
+    const percentualEntrada = parseFloat(configs.percentual_entrada || '40');
+    
+    let itensTexto = '';
+    if (itensAdicionais.length > 0) {
+      itensTexto = '\nITENS ADICIONAIS:\n';
+      itensAdicionais.forEach(item => {
+        itensTexto += `• ${item.descricao}: ${item.quantidade}x R$ ${item.valor.toFixed(2).replace('.', ',')} = R$ ${(item.valor * item.quantidade).toFixed(2).replace('.', ',')}\n`;
+      });
+    }
+    
+    const contrato = `
+JULIO'S PIZZA HOUSE
+CONTRATO DE PRESTAÇÃO DE SERVIÇOS
 
-CONTRATANTE: ${formulario.nome_completo.toUpperCase()}, CPF/CNPJ: n°${formulario.cpf}, residente em ${formulario.endereco.toUpperCase()}.
+CONTRATANTE: ${formulario.nome_completo.toUpperCase()}
+CPF: ${formulario.cpf}
+Endereço: ${formulario.endereco.toUpperCase()}
 
-CONTRATADA: JULIO'S PIZZA HOUSE, com sede em Londrina, na Rua Alzira Postali Gewrher, nº 119, bairro Jardim Catuai, Cep 86086-230, no Estado Paraná, inscrita no CPF sob o nº 034.988.389-03, neste ato representada pelo Responsável Sr. Júlio Cesar Fermino.
+CONTRATADA: JULIO'S PIZZA HOUSE
+Endereço: Rua Alzira Postali Gewrher, nº 119
+Bairro: Jardim Catuai, CEP: 86086-230
+Londrina - Paraná
+CPF: 034.988.389-03
+Responsável: Sr. Júlio Cesar Fermino
 
-As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Prestação de Serviços de Rodizio de pizza para festa, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente.
+OBJETO DO CONTRATO
 
-DO OBJETO DO CONTRATO
+O presente contrato tem por objeto a prestação de serviços de rodízio de pizza para evento que se realizará em:
 
-Cláusula 1ª. É objeto do presente contrato a prestação pela CONTRATADA à CONTRATANTE do serviço de rodizio de pizza, em evento que se realizará na data de ${formatDate(formulario.data_evento)}, no endereço / local: ${formulario.endereco_evento.toUpperCase()}.
+Data: ${formatDate(formulario.data_evento)}
+Horário: ${formatTime(formulario.horario)} às ${String(parseInt(formulario.horario.split(':')[0]) + 3).padStart(2, '0')}:${formulario.horario.split(':')[1]}
+Local: ${formulario.endereco_evento.toUpperCase()}
 
-O EVENTO
+DETALHES DO EVENTO
 
-Cláusula 2ª. O evento, para cuja realização são contratados os serviços de Rodizio de Pizza, é a festa de confraternização da CONTRATANTE, e contará com a presença de aproximadamente ${formulario.quantidade_adultos} adultos${formulario.quantidade_criancas > 0 ? ` e ${formulario.quantidade_criancas} crianças` : ''} a serem confirmada uma semana antes do evento.
-
-Parágrafo único. O evento realizar-se-á no horário e local indicado no caput da cláusula 1ª, devendo o serviço de rodizio de pizza a ser prestado das ${formatTime(formulario.horario)} até às ${String(parseInt(formulario.horario.split(':')[0]) + 3).padStart(2, '0')}:${formulario.horario.split(':')[1]} horas.
+Número de pessoas confirmadas:
+• Adultos: ${formulario.quantidade_adultos} pessoas
+• Crianças (5-9 anos): ${formulario.quantidade_criancas} pessoas
+• Total: ${formulario.quantidade_adultos + formulario.quantidade_criancas} pessoas${itensTexto}
 
 OBRIGAÇÕES DA CONTRATANTE
 
-Cláusula 3ª. A CONTRATANTE deverá fornecer à CONTRATADA todas as informações necessárias à realização adequada do serviço de rodizio de pizza, devendo especificar os detalhes do evento, necessários ao perfeito fornecimento do serviço, e a forma como este deverá ser prestado.
-
-Cláusula 4ª. A CONTRATANTE deverá efetuar o pagamento na forma e condições estabelecidas na cláusula 9ª.
+A CONTRATANTE deverá:
+• Fornecer todas as informações necessárias
+• Efetuar o pagamento conforme estabelecido
+• Disponibilizar local ventilado e tomada 220V
 
 OBRIGAÇÕES DA CONTRATADA
 
-Cláusula 5ª. É dever da CONTRATADA oferecer um serviço de rodizio pizza de acordo com as especificações da CONTRATANTE, devendo o serviço iniciar-se às ${formatTime(formulario.horario)} e terminar às ${String(parseInt(formulario.horario.split(':')[0]) + 3).padStart(2, '0')}:${formulario.horario.split(':')[1]} horas.
+A CONTRATADA se compromete a:
+• Fornecer rodízio de pizza de alta qualidade
+• Disponibilizar pelo menos 1 pizzaiolo e 1 garçom
+• Manter funcionários uniformizados
+• Preparar quantidade suficiente para até 10% a mais
 
-Parágrafo único. A CONTRATADA está obrigada a fornecer aos convidados do CONTRATANTE produtos de alta qualidade, que deverão ser preparados e servidos dentro de rigorosas normas de higiene e limpeza.
+OBSERVAÇÃO: Excedente de horário será cobrado R$ 300,00 a cada meia hora ultrapassada.
+\f
+VALORES E FORMA DE PAGAMENTO
 
-Obs: O excedente de horário será cobrado 300,00 (trezentos reais) a cada meia hora do horário ultrapassado.
+Valor por pessoa:
+• Adultos: R$ ${valorAdulto.toFixed(2).replace('.', ',')} cada
+• Crianças: R$ ${valorCrianca.toFixed(2).replace('.', ',')} cada
 
-Cláusula 6ª. A CONTRATADA se compromete a fornecer o cardápio escolhido pela CONTRATANTE, cujas especificações, inclusive de quantidade a ser servida, encontram-se em documento anexo ao presente contrato.
+VALOR TOTAL DO SERVIÇO: R$ ${valorTotal.toFixed(2).replace('.', ',')}
 
-Cláusula 7ª. A CONTRATADA fornecerá pelo menos 1 pizzaiolo e 1 garçom para servir os convidados nas mesas.
+Forma de pagamento:
+• Entrada (${percentualEntrada}%): R$ ${entrada.toFixed(2).replace('.', ',')}
+  (Depositar na Caixa Econômica - Ag: 1479 - Conta: 00028090-5)
+• Restante: R$ ${restante.toFixed(2).replace('.', ',')}
+  (A ser pago até o dia anterior ao evento)
 
-Cláusula 8ª. A CONTRATADA obriga-se a manter todos os seus empregados devidamente uniformizados durante a prestação dos serviços ora contratados, garantindo que todos eles possuem os requisitos de urbanidade, moralidade e educação.
+CANCELAMENTO
 
-DO PREÇO E DAS CONDIÇÕES DE PAGAMENTO
+O contrato pode ser rescindido por qualquer parte com comunicação formal até 10 dias antes do evento, com devolução da entrada. Cancelamento após pagamento da entrada: valor será creditado para futura contratação em até 30 dias.
 
-Cláusula 9. O serviço contratado no presente instrumento será remunerado dependendo do numero de pessoas confirmadas uma semana antes do evento. A contratada garante que a quantidade de comida seja suficiente para atender o num de pessoas presentes, estando preparada para atender até 10% a mais do numero de pessoas confirmadas, cobrando o valor de R$ 55,00 por adulto e R$ 27,00 por crianças no total de R$ ${valorTotal.toFixed(2).replace('.', ',')}. O serviço deve ser pago em dinheiro, com uma entrada de R$ ${entrada.toFixed(2).replace('.', ',')} (depositados em conta, caixa econômica Ag: 1479 conta: 00028090-5 conta corrente) ANTECIPADO, a diferença no ato da festa no valor de R$ ${restante.toFixed(2).replace('.', ',')}.
+LONDRINA, ${new Date().toLocaleDateString('pt-BR')}
 
-Cláusula 10. O presente contrato poderá ser rescindido unilateralmente por qualquer uma das partes, desde que haja comunicação formal por escrito justificando o motivo. Deverá acontecer, além disso, até 10 dias corridos, antes da data prevista para o evento, com devolução da entrada. Caso o cliente queira ou precise cancelar ou mudar a data da reserva, após ter pago a entrada, a contratada descontará o valor pago na futura contratação do serviço se acontecer nos primeiros 30 dias corridos após o dia antecipadamente reservado.
+_________________________________
+CONTRATANTE
+${formulario.nome_completo}
+CPF: ${formulario.cpf}
 
-LONDRINA, ${new Date().toLocaleDateString('pt-BR')}.
-
-
-_________________________________                    _________________________________
-        CONTRATANTE                                      CONTRATADA
-    ${formulario.nome_completo}                        Júlio Cesar Fermino
-      CPF: ${formulario.cpf}                            CPF: 034.988.389-03`;
+_________________________________
+CONTRATADA
+Júlio Cesar Fermino
+CPF: 034.988.389-03
+`;
 
     setContratoGerado(contrato);
   };
 
   const gerarRecibo = (formulario: Formulario) => {
-    const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas);
-    const entrada = calcularEntrada(valorTotal);
+    const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itensAdicionais);
     
-    const recibo = `RECIBO DE ENTRADA - JULIO'S PIZZA HOUSE
+    let entradaRecibo: number;
+    if (formulario.valor_entrada && formulario.valor_entrada > 0) {
+      entradaRecibo = formulario.valor_entrada;
+    } else {
+      entradaRecibo = calcularEntrada(valorTotal);
+    }
+    
+    const percentualEntrada = parseFloat(configs.percentual_entrada || '40');
+    
+    const recibo = `
+JULIO'S PIZZA HOUSE
+RECIBO DE ENTRADA
+
+RECIBO Nº: ${formulario.id.substring(0, 8).toUpperCase()}
 
 Recebemos de: ${formulario.nome_completo}
 CPF: ${formulario.cpf}
 Endereço: ${formulario.endereco}
 
-A importância de R$ ${entrada.toFixed(2).replace('.', ',')} (${numberToWords(entrada)} reais)
+A importância de: R$ ${entradaRecibo.toFixed(2).replace('.', ',')}
+(${numberToWordsBrazilian(entradaRecibo)})
 
-Referente a: Entrada para contratação de serviço de rodízio de pizza para evento em ${formatDate(formulario.data_evento)} às ${formatTime(formulario.horario)}
+REFERENTE A:
+Entrada para contratação de serviço de rodízio de pizza
 
-Local do evento: ${formulario.endereco_evento}
-Quantidade de pessoas: ${formulario.quantidade_adultos} adultos${formulario.quantidade_criancas > 0 ? ` e ${formulario.quantidade_criancas} crianças` : ''}
+DETALHES DO EVENTO:
+• Data: ${formatDate(formulario.data_evento)}
+• Horário: ${formatTime(formulario.horario)}
+• Local: ${formulario.endereco_evento}
+• Pessoas: ${formulario.quantidade_adultos} adultos${formulario.quantidade_criancas > 0 ? ` e ${formulario.quantidade_criancas} crianças` : ''}
 
-Valor total do serviço: R$ ${valorTotal.toFixed(2).replace('.', ',')}
-Valor da entrada (40%): R$ ${entrada.toFixed(2).replace('.', ',')}
-Valor restante: R$ ${(valorTotal - entrada).toFixed(2).replace('.', ',')} (a ser pago no dia do evento)
+RESUMO FINANCEIRO:
+• Valor total do serviço: R$ ${valorTotal.toFixed(2).replace('.', ',')}
+• Entrada (${percentualEntrada}%): R$ ${entradaRecibo.toFixed(2).replace('.', ',')}
+• Saldo restante: R$ ${(valorTotal - entradaRecibo).toFixed(2).replace('.', ',')}
+  (a ser pago até o dia anterior ao evento)
 
-Data: ${new Date().toLocaleDateString('pt-BR')}
+Data de emissão: ${new Date().toLocaleDateString('pt-BR')}
 
 _________________________________
 Júlio Cesar Fermino
 CPF: 034.988.389-03
-Júlio's Pizza House`;
+Júlio's Pizza House
+`;
 
     setReciboGerado(recibo);
   };
 
-  const numberToWords = (num: number): string => {
-    // Função simplificada para converter número em palavras
-    const units = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove'];
-    const teens = ['dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
-    const tens = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
-    const hundreds = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
-    
-    const intPart = Math.floor(num);
-    const decPart = Math.round((num - intPart) * 100);
-    
-    if (intPart === 0) return 'zero';
-    if (intPart === 100) return 'cem';
-    
-    let result = '';
-    
-    if (intPart >= 100) {
-      result += hundreds[Math.floor(intPart / 100)];
-      if (intPart % 100 !== 0) result += ' e ';
-    }
-    
-    const remainder = intPart % 100;
-    if (remainder >= 20) {
-      result += tens[Math.floor(remainder / 10)];
-      if (remainder % 10 !== 0) result += ' e ' + units[remainder % 10];
-    } else if (remainder >= 10) {
-      result += teens[remainder - 10];
-    } else if (remainder > 0) {
-      result += units[remainder];
-    }
-    
-    if (decPart > 0) {
-      result += ` e ${decPart}/100`;
-    }
-    
-    return result;
-  };
+  // Função melhorada para download de PDF com espaçamento reduzido
+  const downloadPDF = (content: string, filename: string) => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
 
-  const downloadDocument = (content: string, filename: string) => {
-    const element = document.createElement('a');
-    const file = new Blob([content], { type: 'text/plain' });
-    element.href = URL.createObjectURL(file);
-    element.download = filename;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    doc.setFont('courier');
+    doc.setFontSize(10); // Reduzido de 11 para 10
+
+    const marginLeft = 12; // Reduzido de 15 para 12
+    const marginRight = 12; // Reduzido de 15 para 12
+    const marginTop = 15; // Reduzido de 20 para 15
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const usableWidth = pageWidth - marginLeft - marginRight;
+    const usableHeight = pageHeight - marginTop - 15; // 15mm bottom margin
+    
+    // Dividir o conteúdo por quebras de página explícitas (\f)
+    const sections = content.split('\f');
+    
+    sections.forEach((section, sectionIndex) => {
+      if (sectionIndex > 0) {
+        doc.addPage();
+      }
+      
+      // Dividir o texto em linhas respeitando a largura da página
+      const lines = doc.splitTextToSize(section.trim(), usableWidth);
+      
+      let currentY = marginTop;
+      let pageCount = 0;
+      
+      for (let i = 0; i < lines.length; i++) {
+        // Verificar se precisamos de uma nova página
+        if (currentY + 5 > usableHeight) { // Reduzido de 7 para 5mm
+          doc.addPage();
+          currentY = marginTop;
+          pageCount++;
+        }
+        
+        doc.text(lines[i], marginLeft, currentY);
+        currentY += 5; // Reduzido de 7 para 5mm - espaçamento entre linhas
+      }
+    });
+
+    // Salvar o PDF
+    doc.save(filename);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Geração de Contratos e Recibos</h2>
+        <h2 className="text-2xl font-bold text-white">Geração de Contratos e Recibos</h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-orange-400">Eventos Confirmados</h3>
           {formularios.map((formulario) => (
-            <Card key={formulario.id} className="bg-gray-800 border-gray-700 hover:border-orange-500/50 transition-colors">
+            <Card key={formulario.id} className="bg-gray-800/50 backdrop-blur-sm border-gray-700 hover:border-orange-500/50 transition-colors">
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-3">
                   <div>
@@ -221,13 +399,103 @@ Júlio's Pizza House`;
                   </div>
                   <div className="text-right">
                     <p className="text-orange-400 font-bold">
-                      R$ {calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas).toFixed(2).replace('.', ',')}
+                      R$ {calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itensAdicionais).toFixed(2).replace('.', ',')}
                     </p>
                     <p className="text-gray-400 text-sm">Total</p>
                   </div>
                 </div>
                 
-                <div className="flex space-x-2">
+                {/* Seção de itens adicionais */}
+                {selectedFormulario?.id === formulario.id && (
+                  <div className="mb-4 p-4 bg-gray-700/50 rounded-lg">
+                    <h5 className="text-white font-medium mb-3">Itens Adicionais</h5>
+                    
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      <Input
+                        placeholder="Descrição"
+                        value={novoItem.descricao}
+                        onChange={(e) => setNovoItem({...novoItem, descricao: e.target.value})}
+                        className="bg-gray-600 border-gray-500 text-white text-sm"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Valor"
+                        value={novoItem.valor}
+                        onChange={(e) => setNovoItem({...novoItem, valor: parseFloat(e.target.value) || 0})}
+                        className="bg-gray-600 border-gray-500 text-white text-sm"
+                      />
+                      <div className="flex gap-1">
+                        <Input
+                          type="number"
+                          placeholder="Qtd"
+                          value={novoItem.quantidade}
+                          onChange={(e) => setNovoItem({...novoItem, quantidade: parseInt(e.target.value) || 1})}
+                          className="bg-gray-600 border-gray-500 text-white text-sm"
+                        />
+                        <Button 
+                          size="sm" 
+                          onClick={adicionarItem}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Plus size={14} />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {itensAdicionais.map((item, index) => (
+                      <div key={index} className="flex justify-between items-center mb-2 p-2 bg-gray-600/50 rounded">
+                        <span className="text-white text-sm">
+                          {item.descricao} - {item.quantidade}x R$ {item.valor.toFixed(2).replace('.', ',')}
+                        </span>
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={() => removerItem(index)}
+                        >
+                          <Trash2 size={12} />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Campo de Valor de Entrada Editável */}
+                {selectedFormulario?.id === formulario.id && (
+                  <div className="mt-4 space-y-2">
+                    <label htmlFor="valorEntrada" className="text-sm font-medium text-white">
+                      Valor da Entrada (R$)
+                    </label>
+                    <Input
+                      id="valorEntrada"
+                      type="number"
+                      placeholder="Valor da Entrada"
+                      value={valorEntradaEditavel}
+                      onChange={(e) => setValorEntradaEditavel(e.target.value)}
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                    <Button
+                      onClick={handleSalvarValorEntrada}
+                      className="bg-blue-600 hover:bg-blue-700 text-white mt-2"
+                      size="sm"
+                    >
+                      Salvar Entrada
+                    </Button>
+                  </div>
+                )}
+                
+                <div className="flex space-x-2 mt-4">
+                  <Button 
+                    size="sm" 
+                    onClick={() => {
+                      setSelectedFormulario(formulario);
+                      if (selectedFormulario?.id !== formulario.id) {
+                        setItensAdicionais([]);
+                      }
+                    }}
+                    className="bg-gray-600 hover:bg-gray-700"
+                  >
+                    Selecionar
+                  </Button>
                   <Button 
                     size="sm" 
                     onClick={() => {
@@ -259,7 +527,7 @@ Júlio's Pizza House`;
         </div>
 
         {(contratoGerado || reciboGerado) && (
-          <Card className="bg-gray-800 border-gray-700 sticky top-4">
+          <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700 sticky top-4">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle className="text-orange-400">
@@ -267,19 +535,19 @@ Júlio's Pizza House`;
                 </CardTitle>
                 <Button 
                   size="sm"
-                  onClick={() => downloadDocument(
+                  onClick={() => downloadPDF(
                     contratoGerado || reciboGerado,
-                    `${contratoGerado ? 'contrato' : 'recibo'}_${selectedFormulario?.nome_completo.replace(/\s+/g, '_')}.txt`
+                    `${contratoGerado ? 'contrato' : 'recibo'}_${selectedFormulario?.nome_completo.replace(/\s+/g, '_')}.pdf`
                   )}
                   className="bg-orange-600 hover:bg-orange-700"
                 >
                   <Download className="mr-1" size={14} />
-                  Download
+                  Download PDF
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="bg-white text-black p-4 rounded text-sm whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">
+              <div className="bg-white text-black p-4 rounded text-xs whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">
                 {contratoGerado || reciboGerado}
               </div>
             </CardContent>

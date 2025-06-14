@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Trash2, Instagram, ExternalLink } from 'lucide-react';
+import { Plus, Edit, Trash2, Instagram, ExternalLink, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface InstagramPost {
@@ -31,6 +31,7 @@ export const InstagramManager = () => {
     url_post: '',
     url_imagem: ''
   });
+  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -55,6 +56,50 @@ export const InstagramManager = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `instagram/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('images')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const imageUrl = await uploadImage(file);
+      setFormData(prev => ({ ...prev, url_imagem: imageUrl }));
+      toast({
+        title: "Sucesso",
+        description: "Imagem enviada com sucesso!",
+      });
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível fazer upload da imagem.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -213,20 +258,45 @@ export const InstagramManager = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="url_imagem" className="text-gray-300">URL da Imagem</Label>
-                  <Input
-                    id="url_imagem"
-                    value={formData.url_imagem}
-                    onChange={(e) => setFormData(prev => ({ ...prev, url_imagem: e.target.value }))}
-                    placeholder="https://exemplo.com/imagem.jpg"
-                    required
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
+                  <Label htmlFor="image" className="text-gray-300">Imagem</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="bg-gray-700 border-gray-600 text-white"
+                        disabled={uploading}
+                      />
+                      <Button
+                        type="button"
+                        disabled={uploading}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Upload className="mr-2" size={16} />
+                        {uploading ? 'Enviando...' : 'Upload'}
+                      </Button>
+                    </div>
+                    <Input
+                      placeholder="Ou cole a URL da imagem"
+                      value={formData.url_imagem}
+                      onChange={(e) => setFormData(prev => ({ ...prev, url_imagem: e.target.value }))}
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  {formData.url_imagem && (
+                    <img 
+                      src={formData.url_imagem} 
+                      alt="Preview"
+                      className="mt-2 w-32 h-32 object-cover rounded"
+                    />
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button 
                     type="submit" 
                     className="bg-pink-600 hover:bg-pink-700"
+                    disabled={!formData.titulo || !formData.url_post || !formData.url_imagem}
                   >
                     {editingPost ? 'Atualizar' : 'Adicionar'}
                   </Button>

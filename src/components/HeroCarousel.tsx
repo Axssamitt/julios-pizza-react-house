@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { supabase } from '@/integrations/supabase/client';
+import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 
 interface CarouselImage {
   id: string;
@@ -38,7 +40,7 @@ export const HeroCarousel = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-64 bg-gray-800 rounded-lg animate-pulse flex items-center justify-center">
+      <div className="w-full h-64 bg-gray-800/50 backdrop-blur-sm rounded-lg animate-pulse flex items-center justify-center">
         <span className="text-gray-400">Carregando...</span>
       </div>
     );
@@ -46,20 +48,33 @@ export const HeroCarousel = () => {
 
   if (images.length === 0) {
     return (
-      <div className="w-full h-64 bg-gray-800 rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 bg-gray-800/50 backdrop-blur-sm rounded-lg flex items-center justify-center">
         <span className="text-gray-400">Nenhuma imagem encontrada</span>
       </div>
     );
   }
 
   return (
-    <Carousel className="w-full max-w-xs md:max-w-md lg:max-w-lg mx-auto">
+    <Carousel 
+      className="w-full max-w-xs md:max-w-md lg:max-w-lg mx-auto"
+      opts={{
+        align: "start",
+        loop: true,
+      }}
+      plugins={[
+        Autoplay({
+          delay: 4000,
+          stopOnInteraction: false, // <-- garante autoplay mesmo após interação
+          stopOnMouseEnter: false,  // <-- não pausa ao passar mouse (desktop)
+        }),
+      ]}
+    >
       <CarouselContent>
         {images.map((image) => (
           <CarouselItem key={image.id}>
-            <Card className="border-orange-500/30 bg-gray-800">
+            <Card className="border-0 bg-transparent shadow-none">
               <CardContent className="p-2">
-                <div className="aspect-square relative overflow-hidden rounded-lg">
+                <div className="aspect-square relative overflow-hidden rounded-lg shadow-2xl">
                   <img
                     src={image.url_imagem}
                     alt={image.titulo}

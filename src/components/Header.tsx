@@ -1,11 +1,12 @@
-
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const menuItems = [
     { label: 'INÍCIO', href: '#home' },
@@ -19,13 +20,25 @@ export const Header = () => {
   const handleMenuClick = (href: string) => {
     setIsMenuOpen(false);
     if (href.startsWith('#')) {
-      // Para âncoras, use navegação suave
-      const element = document.querySelector(href);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+      if (location.pathname !== '/') {
+        // Navega para a home e faz scroll após o carregamento
+        navigate('/', { replace: false });
+        setTimeout(() => {
+          const element = document.querySelector(href);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 300); // Pequeno delay para garantir renderização
+      } else {
+        const element = document.querySelector(href);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
       }
     }
   };
+
+  // ...restante do componente permanece igual...
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-orange-500/20">
@@ -49,14 +62,14 @@ export const Header = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex space-x-8">
+          <nav className="hidden lg:flex items-center space-x-8">
             {menuItems.map((item) => {
               if (item.href.startsWith('/')) {
                 return (
                   <Link
                     key={item.label}
                     to={item.href}
-                    className={`text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium ${
+                    className={`text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium text-center ${
                       item.label === 'ADMIN' ? 'bg-orange-500/20 px-3 py-1 rounded-md border border-orange-500/50' : ''
                     }`}
                   >
@@ -68,7 +81,7 @@ export const Header = () => {
                 <button
                   key={item.label}
                   onClick={() => handleMenuClick(item.href)}
-                  className="text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium"
+                  className="text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium text-center"
                 >
                   {item.label}
                 </button>
@@ -97,8 +110,8 @@ export const Header = () => {
                     <Link
                       key={item.label}
                       to={item.href}
-                      className={`text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium ${
-                        item.label === 'ADMIN' ? 'bg-orange-500/20 px-3 py-2 rounded-md border border-orange-500/50 text-center' : ''
+                      className={`text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium text-center ${
+                        item.label === 'ADMIN' ? 'bg-orange-500/20 px-3 py-2 rounded-md border border-orange-500/50' : ''
                       }`}
                       onClick={() => setIsMenuOpen(false)}
                     >
@@ -110,7 +123,7 @@ export const Header = () => {
                   <button
                     key={item.label}
                     onClick={() => handleMenuClick(item.href)}
-                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium text-left"
+                    className="text-gray-300 hover:text-orange-400 transition-colors duration-200 font-medium text-center"
                   >
                     {item.label}
                   </button>

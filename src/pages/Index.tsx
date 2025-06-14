@@ -2,6 +2,7 @@
 import React from 'react';
 import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
+import { AboutUs } from '@/components/AboutUs';
 import { PizzaGallery } from '@/components/PizzaGallery';
 import { ContactForm } from '@/components/ContactForm';
 import { InstagramFeed } from '@/components/InstagramFeed';
@@ -20,6 +21,7 @@ const Index = () => {
         <PizzaGallery />
         <InstagramFeed />
         <ContactForm />
+        <AboutUs />
       </main>
       <Footer />
     </div>

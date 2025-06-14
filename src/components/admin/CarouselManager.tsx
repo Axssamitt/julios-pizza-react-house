@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Edit, Trash2, Image, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface CarouselImage {
@@ -16,6 +16,8 @@ interface CarouselImage {
   url_imagem: string;
   ordem: number;
   ativo: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export const CarouselManager = () => {
@@ -27,6 +29,7 @@ export const CarouselManager = () => {
     titulo: '',
     url_imagem: ''
   });
+  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,7 +46,7 @@ export const CarouselManager = () => {
       if (error) throw error;
       setImages(data || []);
     } catch (error) {
-      console.error('Erro ao carregar imagens:', error);
+      console.error('Erro ao carregar imagens do carrossel:', error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar as imagens do carrossel.",
@@ -54,10 +57,54 @@ export const CarouselManager = () => {
     }
   };
 
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `carousel/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('images')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const imageUrl = await uploadImage(file);
+      setFormData(prev => ({ ...prev, url_imagem: imageUrl }));
+      toast({
+        title: "Sucesso",
+        description: "Imagem enviada com sucesso!",
+      });
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível fazer upload da imagem.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const nextOrderIndex = Math.max(...images.map(img => img.ordem), 0) + 1;
+      const nextOrder = Math.max(...images.map(img => img.ordem), 0) + 1;
       
       if (editingImage) {
         const { error } = await supabase
@@ -80,7 +127,7 @@ export const CarouselManager = () => {
           .insert({
             titulo: formData.titulo,
             url_imagem: formData.url_imagem,
-            ordem: nextOrderIndex,
+            ordem: nextOrder,
             ativo: true
           });
 
@@ -144,28 +191,6 @@ export const CarouselManager = () => {
     }
   };
 
-  const handleOrderChange = async (id: string, direction: 'up' | 'down') => {
-    const currentImage = images.find(img => img.id === id);
-    if (!currentImage) return;
-
-    const otherImages = images.filter(img => img.id !== id);
-    const targetOrder = direction === 'up' 
-      ? Math.max(...otherImages.filter(img => img.ordem < currentImage.ordem).map(img => img.ordem), 0)
-      : Math.min(...otherImages.filter(img => img.ordem > currentImage.ordem).map(img => img.ordem), currentImage.ordem + 1);
-
-    try {
-      const { error } = await supabase
-        .from('carousel_images')
-        .update({ ordem: targetOrder })
-        .eq('id', id);
-
-      if (error) throw error;
-      fetchImages();
-    } catch (error) {
-      console.error('Erro ao alterar ordem:', error);
-    }
-  };
-
   if (loading) {
     return <div className="text-white">Carregando...</div>;
   }
@@ -175,7 +200,10 @@ export const CarouselManager = () => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-white">Gerenciar Carrossel</CardTitle>
+            <CardTitle className="text-white flex items-center">
+              <Image className="mr-2" size={20} />
+              Gerenciar Carrossel
+            </CardTitle>
             <CardDescription className="text-gray-400">
               Adicione e gerencie as imagens do carrossel da página principal
             </CardDescription>
@@ -196,10 +224,10 @@ export const CarouselManager = () => {
             <DialogContent className="bg-gray-800 border-gray-700">
               <DialogHeader>
                 <DialogTitle className="text-white">
-                  {editingImage ? 'Editar' : 'Adicionar'} Imagem
+                  {editingImage ? 'Editar' : 'Adicionar'} Imagem do Carrossel
                 </DialogTitle>
                 <DialogDescription className="text-gray-400">
-                  {editingImage ? 'Edite os dados da imagem' : 'Adicione uma nova imagem ao carrossel'}
+                  {editingImage ? 'Edite as informações da imagem' : 'Adicione uma nova imagem ao carrossel'}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -215,20 +243,45 @@ export const CarouselManager = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="url_imagem" className="text-gray-300">URL da Imagem</Label>
-                  <Input
-                    id="url_imagem"
-                    value={formData.url_imagem}
-                    onChange={(e) => setFormData(prev => ({ ...prev, url_imagem: e.target.value }))}
-                    placeholder="https://exemplo.com/imagem.jpg"
-                    required
-                    className="bg-gray-700 border-gray-600 text-white"
-                  />
+                  <Label htmlFor="image" className="text-gray-300">Imagem</Label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="bg-gray-700 border-gray-600 text-white"
+                        disabled={uploading}
+                      />
+                      <Button
+                        type="button"
+                        disabled={uploading}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Upload className="mr-2" size={16} />
+                        {uploading ? 'Enviando...' : 'Upload'}
+                      </Button>
+                    </div>
+                    <Input
+                      placeholder="Ou cole a URL da imagem"
+                      value={formData.url_imagem}
+                      onChange={(e) => setFormData(prev => ({ ...prev, url_imagem: e.target.value }))}
+                      className="bg-gray-700 border-gray-600 text-white"
+                    />
+                  </div>
+                  {formData.url_imagem && (
+                    <img 
+                      src={formData.url_imagem} 
+                      alt="Preview"
+                      className="mt-2 w-32 h-32 object-cover rounded"
+                    />
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button 
                     type="submit" 
                     className="bg-orange-600 hover:bg-orange-700"
+                    disabled={!formData.titulo || !formData.url_imagem}
                   >
                     {editingImage ? 'Atualizar' : 'Adicionar'}
                   </Button>
@@ -253,7 +306,6 @@ export const CarouselManager = () => {
               <TableHead className="text-gray-300">Imagem</TableHead>
               <TableHead className="text-gray-300">Título</TableHead>
               <TableHead className="text-gray-300">Status</TableHead>
-              <TableHead className="text-gray-300">Ordem</TableHead>
               <TableHead className="text-gray-300">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -281,26 +333,6 @@ export const CarouselManager = () => {
                     {image.ativo ? 'Ativo' : 'Inativo'}
                   </Button>
                 </TableCell>
-                <TableCell className="text-white">
-                  <div className="flex gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOrderChange(image.id, 'up')}
-                      className="border-gray-600 text-gray-300"
-                    >
-                      <ArrowUp size={14} />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOrderChange(image.id, 'down')}
-                      className="border-gray-600 text-gray-300"
-                    >
-                      <ArrowDown size={14} />
-                    </Button>
-                  </div>
-                </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button
@@ -314,7 +346,7 @@ export const CarouselManager = () => {
                         });
                         setDialogOpen(true);
                       }}
-                      className="border-blue-500 text-blue-400 hover:bg-blue-500 hover:text-white"
+                      className="border-orange-500 text-orange-400 hover:bg-orange-500 hover:text-white"
                     >
                       <Edit size={14} />
                     </Button>

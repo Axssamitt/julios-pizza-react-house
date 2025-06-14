@@ -1,15 +1,16 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const NotFound = () => {
-  const location = useLocation();
+const NotFound: React.FC = () => {
+  const navigate = useNavigate();
 
   useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
-  }, [location.pathname]);
+    const timer = setTimeout(() => {
+      navigate("/");
+    }, 0); // redireciona após 3 segundos
+
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

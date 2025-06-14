@@ -1,8 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Star, Heart } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Pizza {
@@ -11,13 +8,15 @@ interface Pizza {
   ingredientes: string;
   imagem_url: string | null;
   ativo: boolean;
-  ordem: number;
+  tipo: string;
 }
 
 export const PizzaGallery = () => {
   const [pizzas, setPizzas] = useState<Pizza[]>([]);
-  const [selectedPizza, setSelectedPizza] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showAllSalgadas, setShowAllSalgadas] = useState(false);
+  const [showAllDoces, setShowAllDoces] = useState(false);
+
 
   useEffect(() => {
     fetchPizzas();
@@ -29,112 +28,127 @@ export const PizzaGallery = () => {
         .from('pizzas')
         .select('*')
         .eq('ativo', true)
-        .order('ordem', { ascending: true })
-        .limit(4);
+        .order('ordem');
 
       if (error) throw error;
       setPizzas(data || []);
     } catch (error) {
-      console.error('Erro ao buscar pizzas:', error);
+      console.error('Erro ao carregar pizzas:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const pizzasSalgadas = pizzas.filter(pizza => pizza.tipo === 'salgada');
+  const pizzasDoces = pizzas.filter(pizza => pizza.tipo === 'doce');
+
+  // Limita a 3 ou mostra todas conforme o estado
+  const displayedSalgadas = showAllSalgadas ? pizzasSalgadas : pizzasSalgadas.slice(0, 3);
+  const displayedDoces = showAllDoces ? pizzasDoces : pizzasDoces.slice(0, 3);
+
   if (loading) {
     return (
-      <section id="pizzas" className="py-20 bg-gray-800">
+      <section id="pizzas" className="py-20 bg-gray-900">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
-                Nossas Pizzas
-              </span>
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="bg-gray-900 border-gray-700 animate-pulse">
-                <div className="w-full h-48 bg-gray-700 rounded-t-lg"></div>
-                <CardContent className="p-6">
-                  <div className="space-y-3">
-                    <div className="h-6 bg-gray-700 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-700 rounded w-full"></div>
-                    <div className="h-4 bg-gray-700 rounded w-2/3"></div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="text-center">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-700 rounded w-64 mx-auto mb-4"></div>
+              <div className="h-4 bg-gray-700 rounded w-96 mx-auto"></div>
+            </div>
           </div>
         </div>
       </section>
     );
   }
 
+  const PizzaCard = ({ pizza }: { pizza: Pizza }) => (
+    <div className="bg-gray-800 rounded-lg overflow-hidden shadow-xl hover:transform hover:scale-105 transition-all duration-300">
+      <div className="relative h-64">
+        <img 
+          src={pizza.imagem_url || 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=400&fit=crop'} 
+          alt={pizza.nome}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+      </div>
+      <div className="p-6">
+        <h3 className="text-xl font-bold text-white mb-3">{pizza.nome}</h3>
+        <p className="text-gray-400 text-sm leading-relaxed">{pizza.ingredientes}</p>
+      </div>
+    </div>
+  );
+
   return (
-    <section id="pizzas" className="py-20 bg-gray-800">
+    <section id="pizzas" className="py-20 bg-gray-900">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
-              Nossas Pizzas
+              Nosso Cardápio
             </span>
           </h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Cada pizza é uma obra de arte culinária, preparada com ingredientes selecionados e muito carinho.
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Descubra sabores únicos preparados com ingredientes frescos e receitas tradicionais
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {pizzas.map((pizza, index) => (
-            <Card 
-              key={pizza.id} 
-              className="bg-gray-900 border-gray-700 hover:border-orange-500/50 transition-all duration-300 hover:scale-105 cursor-pointer group"
-              onClick={() => setSelectedPizza(index)}
-            >
-              <div className="relative overflow-hidden rounded-t-lg">
-                <img 
-                  src={pizza.imagem_url || 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=400&fit=crop'} 
-                  alt={pizza.nome}
-                  className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
-                />
-                <div className="absolute top-3 left-3">
-                  <Badge className="bg-orange-500 text-white">
-                    Especial
-                  </Badge>
-                </div>
-                <div className="absolute top-3 right-3">
-                  <button className="p-2 bg-gray-900/80 rounded-full hover:bg-orange-500 transition-colors">
-                    <Heart size={16} className="text-white" />
-                  </button>
-                </div>
+        {/* Pizzas Salgadas */}
+        {pizzasSalgadas.length > 0 && (
+          <div className="mb-16">
+            <h3 className="text-3xl font-bold text-center mb-12">
+              <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                Pizzas Salgadas
+              </span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+              {displayedSalgadas.map((pizza) => (
+                <PizzaCard key={pizza.id} pizza={pizza} />
+              ))}
+            </div>
+            {pizzasSalgadas.length > 3 && (
+              <div className="flex justify-center mt-8">
+                <button
+                  className="px-6 py-2 rounded bg-orange-500 hover:bg-orange-600 text-white font-semibold transition"
+                  onClick={() => setShowAllSalgadas((v) => !v)}
+                >
+                  {showAllSalgadas ? 'Mostrar menos' : 'Ver todas'}
+                </button>
               </div>
-              
-              <CardContent className="p-6">
-                <h3 className="text-xl font-bold text-white mb-2">{pizza.nome}</h3>
-                <p className="text-gray-400 text-sm mb-4 line-clamp-2">{pizza.ingredientes}</p>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <Star className="text-yellow-400 fill-current" size={16} />
-                    <span className="text-white font-medium">4.8</span>
-                  </div>
-                  <button className="text-orange-400 hover:text-orange-300 font-medium">
-                    Ver mais
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+            )}
+          </div>
+        )}
 
-        <div className="text-center mt-12">
-          <a href="/cardapio">
-            <button className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white px-8 py-4 rounded-lg font-medium transition-all duration-300 hover:scale-105">
-              Ver Cardápio Completo
-            </button>
-          </a>
-        </div>
+        {/* Pizzas Doces */}
+        {pizzasDoces.length > 0 && (
+          <div>
+            <h3 className="text-3xl font-bold text-center mb-12">
+              <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                Pizzas Doces
+              </span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+              {displayedDoces.map((pizza) => (
+                <PizzaCard key={pizza.id} pizza={pizza} />
+              ))}
+            </div>
+            {pizzasDoces.length > 3 && (
+              <div className="flex justify-center mt-8">
+                <button
+                  className="px-6 py-2 rounded bg-orange-500 hover:bg-orange-600 text-white font-semibold transition"
+                  onClick={() => setShowAllDoces((v) => !v)}
+                >
+                  {showAllDoces ? 'Mostrar menos' : 'Ver todas'}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {pizzas.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-400 text-lg">Nenhuma pizza cadastrada no momento.</p>
+          </div>
+        )}
       </div>
     </section>
   );

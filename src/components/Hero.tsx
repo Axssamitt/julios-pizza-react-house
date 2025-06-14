@@ -7,12 +7,16 @@ import { supabase } from '@/integrations/supabase/client';
 interface HomeConfig {
   titulo_hero: string;
   subtitulo_hero: string;
+  align_titulo_hero?: string;
+  align_subtitulo_hero?: string;
 }
 
 export const Hero = () => {
   const [config, setConfig] = useState<HomeConfig>({
     titulo_hero: 'As Melhores Pizzas de Londrina',
-    subtitulo_hero: 'Sabor autêntico para seus eventos. Buffet de pizzas artesanais feitas com ingredientes frescos e muito amor.'
+    subtitulo_hero: 'Sabor autêntico para seus eventos. Buffet de pizzas artesanais feitas com ingredientes frescos e muito amor.',
+    align_titulo_hero: 'left',
+    align_subtitulo_hero: 'left'
   });
 
   useEffect(() => {
@@ -20,12 +24,12 @@ export const Hero = () => {
       try {
         const { data, error } = await supabase
           .from('home_config')
-          .select('titulo_hero, subtitulo_hero')
+          .select('titulo_hero, subtitulo_hero, align_titulo_hero, align_subtitulo_hero')
           .limit(1)
           .single();
         
         if (data) {
-          setConfig(data);
+          setConfig(data as HomeConfig);
         }
       } catch (error) {
         console.error('Erro ao carregar configurações da home:', error);
@@ -41,12 +45,12 @@ export const Hero = () => {
         <div className="flex flex-col lg:flex-row items-center gap-12">
           {/* Content */}
           <div className="flex-1 text-center lg:text-left">
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent">
+            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6" style={{ textAlign: config.align_titulo_hero as React.CSSProperties['textAlign'] }}>
+              <span className="bg-gradient-to-r from-orange-400 via-red-500 to-orange-600 bg-clip-text text-transparent" style={{ whiteSpace: 'pre-line' }}>
                 {config.titulo_hero}
               </span>
             </h2>
-            <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl">
+            <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl" style={{ whiteSpace: 'pre-line', textAlign: config.align_subtitulo_hero as React.CSSProperties['textAlign'] }}>
               {config.subtitulo_hero}
             </p>
 
