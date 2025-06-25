@@ -236,7 +236,7 @@ OBRIGAÇÕES DA CONTRATADA
 
 A CONTRATADA se compromete a:
 • Fornecer rodízio de pizza de alta qualidade
-• Disponibilizar pelo menos 1 pizzaiolo e 1 garçom
+• Disponibilizar pelo menos 1 pizzaiolo e ${Math.ceil((formulario.quantidade_adultos + formulario.quantidade_criancas) / 30)} garçom(s)
 • Manter funcionários uniformizados
 • Preparar quantidade suficiente para até 10% a mais
 
@@ -422,6 +422,7 @@ Júlio's Pizza House
                         placeholder="Valor"
                         value={novoItem.valor}
                         onChange={(e) => setNovoItem({...novoItem, valor: parseFloat(e.target.value) || 0})}
+                        step="any"
                         className="bg-gray-600 border-gray-500 text-white text-sm"
                       />
                       <div className="flex gap-1">

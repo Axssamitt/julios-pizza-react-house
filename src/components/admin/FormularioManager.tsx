@@ -132,7 +132,7 @@ export const FormularioManager = () => {
     // Busca exata por CPF (removendo formatação)
     const cpfLimpo = formulario.cpf.replace(/\D/g, '');
     const termoLimpo = termo.replace(/\D/g, '');
-    const cpfMatch = termoLimpo && cpfLimpo === termoLimpo;
+    const cpfMatch = (termoLimpo && cpfLimpo).includes(termoLimpo);
     
     const nomeCpfMatch = termo === '' || nomeMatch || cpfMatch;
     
