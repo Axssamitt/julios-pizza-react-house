@@ -14,37 +14,32 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     mode === "production" && {
-      name: "vite-obfuscator",
+      name: "vite-obfuscator-all-js",
       closeBundle: () => {
         const distDir = path.resolve(__dirname, "dist");
-        const files = readdirSync(distDir);
+        const jsFiles = readdirSync(distDir).filter(f => f.endsWith(".js"));
 
-        // Procura automaticamente o arquivo JS gerado
-        const targetFile = files.find((f) =>
-          f.endsWith(".js") && f.startsWith("index")
-        );
-
-        if (!targetFile) {
-          console.warn("⚠️ Nenhum arquivo index*.js encontrado para ofuscar.");
+        if (jsFiles.length === 0) {
+          console.warn("⚠️ Nenhum arquivo .js encontrado para ofuscar.");
           return;
         }
 
-        const filePath = path.join(distDir, targetFile);
-        const code = readFileSync(filePath, "utf8");
+        jsFiles.forEach(file => {
+          const filePath = path.join(distDir, file);
+          const code = readFileSync(filePath, "utf8");
 
-        const obfuscated = javascriptObfuscator.obfuscate(code, {
-          compact: true,
-          controlFlowFlattening: true,
-          deadCodeInjection: true,
-          debugProtection: true,
-          disableConsoleOutput: true,
-          selfDefending: true,
+          const obfuscated = javascriptObfuscator.obfuscate(code, {
+            compact: true,
+            controlFlowFlattening: true,
+            deadCodeInjection: true,
+            debugProtection: true,
+            disableConsoleOutput: true,
+            selfDefending: true,
+          });
+
+          writeFileSync(filePath, obfuscated.getObfuscatedCode());
+          console.log(`🔒 ${file} ofuscado com sucesso.`);
         });
-
-        const outputFile = path.join(distDir, "index-protegido.js");
-        writeFileSync(outputFile, obfuscated.getObfuscatedCode());
-
-        console.log(`✅ Código ofuscado salvo em: ${outputFile}`);
       },
     },
   ].filter(Boolean),
