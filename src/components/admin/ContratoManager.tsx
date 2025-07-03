@@ -126,7 +126,7 @@ export const ContratoManager = () => {
       .insert({
         formulario_id: selectedFormulario.id,
         descricao: novoItem.descricao,
-        valor: novoItem.valor.toString(),
+        valor: novoItem.valor,
         quantidade: novoItem.quantidade
       });
 
@@ -187,7 +187,7 @@ export const ContratoManager = () => {
         parcelas.map(parcela => ({
           formulario_id: selectedFormulario.id,
           numero_parcela: parcela.numero_parcela,
-          valor_parcela: parcela.valor_parcela.toString(),
+          valor_parcela: parcela.valor_parcela,
           data_vencimento: parcela.data_vencimento,
           status: parcela.status
         }))
@@ -293,6 +293,11 @@ export const ContratoManager = () => {
     return valorTotal * percentualEntrada;
   };
 
+  const calcularPercentualEntrada = (valorEntrada: number, valorTotal: number) => {
+    if (valorTotal === 0) return 0;
+    return Math.round((valorEntrada / valorTotal) * 100);
+  };
+
   const gerarContrato = (formulario: Formulario) => {
     const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itensAdicionais);
    
@@ -306,7 +311,7 @@ export const ContratoManager = () => {
     const restante = valorTotal - entrada;
     const valorAdulto = parseFloat(configs.valor_adulto || '55.00');
     const valorCrianca = parseFloat(configs.valor_crianca || '27.00');
-    const percentualEntrada = parseFloat(configs.percentual_entrada || '40');
+    const percentualEntradaReal = calcularPercentualEntrada(entrada, valorTotal);
     
     let itensTexto = '';
     if (itensAdicionais.length > 0) {
@@ -382,7 +387,7 @@ Valor por pessoa:
 VALOR TOTAL DO SERVIÇO: R$ ${valorTotal.toFixed(2).replace('.', ',')}
 
 Forma de pagamento:
-• Entrada (${percentualEntrada}%): R$ ${entrada.toFixed(2).replace('.', ',')}
+• Entrada (${percentualEntradaReal}%): R$ ${entrada.toFixed(2).replace('.', ',')}
   (Depositar na Caixa Econômica - Ag: 1479 - Conta: 00028090-5)
 • Restante: R$ ${restante.toFixed(2).replace('.', ',')}
   (A ser pago até o dia anterior ao evento)${parcelamentoTexto}
@@ -417,7 +422,7 @@ CPF: 034.988.389-03
       entradaRecibo = calcularEntrada(valorTotal);
     }
     
-    const percentualEntrada = parseFloat(configs.percentual_entrada || '40');
+    const percentualEntradaReal = calcularPercentualEntrada(entradaRecibo, valorTotal);
     
     const recibo = `
 JULIO'S PIZZA HOUSE
@@ -443,7 +448,7 @@ DETALHES DO EVENTO:
 
 RESUMO FINANCEIRO:
 • Valor total do serviço: R$ ${valorTotal.toFixed(2).replace('.', ',')}
-• Entrada (${percentualEntrada}%): R$ ${entradaRecibo.toFixed(2).replace('.', ',')}
+• Entrada (${percentualEntradaReal}%): R$ ${entradaRecibo.toFixed(2).replace('.', ',')}
 • Saldo restante: R$ ${(valorTotal - entradaRecibo).toFixed(2).replace('.', ',')}
   (a ser pago até o dia anterior ao evento)
 
