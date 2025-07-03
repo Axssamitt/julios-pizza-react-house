@@ -108,6 +108,85 @@ export type Database = {
         }
         Relationships: []
       }
+      contrato_itens_adicionais: {
+        Row: {
+          created_at: string
+          descricao: string
+          formulario_id: string
+          id: string
+          quantidade: number
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          formulario_id: string
+          id?: string
+          quantidade?: number
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          formulario_id?: string
+          id?: string
+          quantidade?: number
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contrato_itens_adicionais_formulario_id_fkey"
+            columns: ["formulario_id"]
+            isOneToOne: false
+            referencedRelation: "formularios_contato"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contrato_parcelamentos: {
+        Row: {
+          created_at: string
+          data_vencimento: string
+          formulario_id: string
+          id: string
+          numero_parcela: number
+          status: string
+          updated_at: string
+          valor_parcela: number
+        }
+        Insert: {
+          created_at?: string
+          data_vencimento: string
+          formulario_id: string
+          id?: string
+          numero_parcela: number
+          status?: string
+          updated_at?: string
+          valor_parcela: number
+        }
+        Update: {
+          created_at?: string
+          data_vencimento?: string
+          formulario_id?: string
+          id?: string
+          numero_parcela?: number
+          status?: string
+          updated_at?: string
+          valor_parcela?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contrato_parcelamentos_formulario_id_fkey"
+            columns: ["formulario_id"]
+            isOneToOne: false
+            referencedRelation: "formularios_contato"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       formularios_contato: {
         Row: {
           cpf: string

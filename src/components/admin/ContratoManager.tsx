@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { FileText, Download, Plus, Trash2 } from 'lucide-react';
+import { FileText, Download, Plus, Trash2, Calendar, Calculator } from 'lucide-react';
 import { numberToWordsBrazilian } from '@/utils/supabaseStorage';
 import { jsPDF } from 'jspdf';
 
@@ -22,7 +24,6 @@ interface Formulario {
   status: string;
   created_at: string;
   valor_entrada?: number | null;
-  itens_adicionais?: ItemAdicional[];
 }
 
 interface ItemAdicional {
@@ -30,6 +31,14 @@ interface ItemAdicional {
   descricao: string;
   valor: number;
   quantidade: number;
+}
+
+interface Parcela {
+  id?: string;
+  numero_parcela: number;
+  valor_parcela: number;
+  data_vencimento: string;
+  status: string;
 }
 
 interface Config {
@@ -44,8 +53,12 @@ export const ContratoManager = () => {
   const [reciboGerado, setReciboGerado] = useState<string>('');
   const [configs, setConfigs] = useState<Record<string, string>>({});
   const [itensAdicionais, setItensAdicionais] = useState<ItemAdicional[]>([]);
+  const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [novoItem, setNovoItem] = useState<ItemAdicional>({ descricao: '', valor: 0, quantidade: 1 });
   const [valorEntradaEditavel, setValorEntradaEditavel] = useState<number | string>('');
+  const [numeroParcelas, setNumeroParcelas] = useState<number>(1);
+  const [primeiraParcela, setPrimeiraParcela] = useState<string>('');
+  const [showParcelamento, setShowParcelamento] = useState<boolean>(false);
 
   useEffect(() => {
     fetchFormularios();
@@ -54,6 +67,8 @@ export const ContratoManager = () => {
 
   useEffect(() => {
     if (selectedFormulario) {
+      fetchItensAdicionais(selectedFormulario.id);
+      fetchParcelas(selectedFormulario.id);
       const valorTotalCalculado = calcularValorTotal(selectedFormulario.quantidade_adultos, selectedFormulario.quantidade_criancas, itensAdicionais);
       const entradaCalculada = calcularEntrada(valorTotalCalculado);
 
@@ -64,8 +79,126 @@ export const ContratoManager = () => {
       }
     } else {
       setValorEntradaEditavel('');
+      setItensAdicionais([]);
+      setParcelas([]);
     }
-  }, [selectedFormulario, configs, itensAdicionais]);
+  }, [selectedFormulario, configs]);
+
+  const fetchItensAdicionais = async (formularioId: string) => {
+    const { data, error } = await supabase
+      .from('contrato_itens_adicionais')
+      .select('*')
+      .eq('formulario_id', formularioId)
+      .order('created_at', { ascending: true });
+
+    if (!error && data) {
+      setItensAdicionais(data.map(item => ({
+        id: item.id,
+        descricao: item.descricao,
+        valor: parseFloat(item.valor),
+        quantidade: item.quantidade
+      })));
+    }
+  };
+
+  const fetchParcelas = async (formularioId: string) => {
+    const { data, error } = await supabase
+      .from('contrato_parcelamentos')
+      .select('*')
+      .eq('formulario_id', formularioId)
+      .order('numero_parcela', { ascending: true });
+
+    if (!error && data) {
+      setParcelas(data.map(parcela => ({
+        id: parcela.id,
+        numero_parcela: parcela.numero_parcela,
+        valor_parcela: parseFloat(parcela.valor_parcela),
+        data_vencimento: parcela.data_vencimento,
+        status: parcela.status
+      })));
+    }
+  };
+
+  const salvarItemAdicional = async () => {
+    if (!selectedFormulario || !novoItem.descricao || novoItem.valor === 0) return;
+
+    const { error } = await supabase
+      .from('contrato_itens_adicionais')
+      .insert({
+        formulario_id: selectedFormulario.id,
+        descricao: novoItem.descricao,
+        valor: novoItem.valor,
+        quantidade: novoItem.quantidade
+      });
+
+    if (!error) {
+      await fetchItensAdicionais(selectedFormulario.id);
+      setNovoItem({ descricao: '', valor: 0, quantidade: 1 });
+    }
+  };
+
+  const removerItemAdicional = async (itemId: string) => {
+    const { error } = await supabase
+      .from('contrato_itens_adicionais')
+      .delete()
+      .eq('id', itemId);
+
+    if (!error && selectedFormulario) {
+      await fetchItensAdicionais(selectedFormulario.id);
+    }
+  };
+
+  const gerarParcelas = () => {
+    if (!selectedFormulario || !primeiraParcela || numeroParcelas < 1) return;
+
+    const valorTotal = calcularValorTotal(selectedFormulario.quantidade_adultos, selectedFormulario.quantidade_criancas, itensAdicionais);
+    const entrada = parseFloat(String(valorEntradaEditavel)) || calcularEntrada(valorTotal);
+    const saldoRestante = valorTotal - entrada;
+    const valorParcela = saldoRestante / numeroParcelas;
+
+    const novasParcelas: Parcela[] = [];
+    for (let i = 1; i <= numeroParcelas; i++) {
+      const dataVencimento = new Date(primeiraParcela);
+      dataVencimento.setMonth(dataVencimento.getMonth() + (i - 1));
+      
+      novasParcelas.push({
+        numero_parcela: i,
+        valor_parcela: valorParcela,
+        data_vencimento: dataVencimento.toISOString().split('T')[0],
+        status: 'pendente'
+      });
+    }
+
+    setParcelas(novasParcelas);
+  };
+
+  const salvarParcelas = async () => {
+    if (!selectedFormulario || parcelas.length === 0) return;
+
+    // Deletar parcelas existentes
+    await supabase
+      .from('contrato_parcelamentos')
+      .delete()
+      .eq('formulario_id', selectedFormulario.id);
+
+    // Inserir novas parcelas
+    const { error } = await supabase
+      .from('contrato_parcelamentos')
+      .insert(
+        parcelas.map(parcela => ({
+          formulario_id: selectedFormulario.id,
+          numero_parcela: parcela.numero_parcela,
+          valor_parcela: parcela.valor_parcela,
+          data_vencimento: parcela.data_vencimento,
+          status: parcela.status
+        }))
+      );
+
+    if (!error) {
+      await fetchParcelas(selectedFormulario.id);
+      setShowParcelamento(false);
+    }
+  };
 
   const handleSalvarValorEntrada = async () => {
     if (!selectedFormulario || valorEntradaEditavel === '') {
@@ -161,17 +294,6 @@ export const ContratoManager = () => {
     return valorTotal * percentualEntrada;
   };
 
-  const adicionarItem = () => {
-    if (novoItem.descricao && novoItem.valor > 0) {
-      setItensAdicionais([...itensAdicionais, { ...novoItem }]);
-      setNovoItem({ descricao: '', valor: 0, quantidade: 1 });
-    }
-  };
-
-  const removerItem = (index: number) => {
-    setItensAdicionais(itensAdicionais.filter((_, i) => i !== index));
-  };
-
   const gerarContrato = (formulario: Formulario) => {
     const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itensAdicionais);
    
@@ -191,7 +313,17 @@ export const ContratoManager = () => {
     if (itensAdicionais.length > 0) {
       itensTexto = '\nITENS ADICIONAIS:\n';
       itensAdicionais.forEach(item => {
-        itensTexto += `• ${item.descricao}: ${item.quantidade}x R$ ${item.valor.toFixed(2).replace('.', ',')} = R$ ${(item.valor * item.quantidade).toFixed(2).replace('.', ',')}\n`;
+        const valorItem = item.valor * item.quantidade;
+        const tipoItem = item.valor < 0 ? 'Desconto' : 'Item';
+        itensTexto += `• ${item.descricao} (${tipoItem}): ${item.quantidade}x R$ ${Math.abs(item.valor).toFixed(2).replace('.', ',')} = R$ ${valorItem.toFixed(2).replace('.', ',')}\n`;
+      });
+    }
+
+    let parcelamentoTexto = '';
+    if (parcelas.length > 0) {
+      parcelamentoTexto = '\n\nPARCELAMENTO DO SALDO:\n';
+      parcelas.forEach(parcela => {
+        parcelamentoTexto += `• Parcela ${parcela.numero_parcela}: R$ ${parcela.valor_parcela.toFixed(2).replace('.', ',')} - Vencimento: ${formatDate(parcela.data_vencimento)}\n`;
       });
     }
     
@@ -254,7 +386,7 @@ Forma de pagamento:
 • Entrada (${percentualEntrada}%): R$ ${entrada.toFixed(2).replace('.', ',')}
   (Depositar na Caixa Econômica - Ag: 1479 - Conta: 00028090-5)
 • Restante: R$ ${restante.toFixed(2).replace('.', ',')}
-  (A ser pago até o dia anterior ao evento)
+  (A ser pago até o dia anterior ao evento)${parcelamentoTexto}
 
 CANCELAMENTO
 
@@ -327,7 +459,6 @@ Júlio's Pizza House
     setReciboGerado(recibo);
   };
 
-  // Função melhorada para download de PDF com espaçamento reduzido
   const downloadPDF = (content: string, filename: string) => {
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -336,17 +467,16 @@ Júlio's Pizza House
     });
 
     doc.setFont('courier');
-    doc.setFontSize(10); // Reduzido de 11 para 10
+    doc.setFontSize(10);
 
-    const marginLeft = 12; // Reduzido de 15 para 12
-    const marginRight = 12; // Reduzido de 15 para 12
-    const marginTop = 15; // Reduzido de 20 para 15
+    const marginLeft = 12;
+    const marginRight = 12;
+    const marginTop = 15;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const usableWidth = pageWidth - marginLeft - marginRight;
-    const usableHeight = pageHeight - marginTop - 15; // 15mm bottom margin
+    const usableHeight = pageHeight - marginTop - 15;
     
-    // Dividir o conteúdo por quebras de página explícitas (\f)
     const sections = content.split('\f');
     
     sections.forEach((section, sectionIndex) => {
@@ -354,26 +484,23 @@ Júlio's Pizza House
         doc.addPage();
       }
       
-      // Dividir o texto em linhas respeitando a largura da página
       const lines = doc.splitTextToSize(section.trim(), usableWidth);
       
       let currentY = marginTop;
       let pageCount = 0;
       
       for (let i = 0; i < lines.length; i++) {
-        // Verificar se precisamos de uma nova página
-        if (currentY + 5 > usableHeight) { // Reduzido de 7 para 5mm
+        if (currentY + 5 > usableHeight) {
           doc.addPage();
           currentY = marginTop;
           pageCount++;
         }
         
         doc.text(lines[i], marginLeft, currentY);
-        currentY += 5; // Reduzido de 7 para 5mm - espaçamento entre linhas
+        currentY += 5;
       }
     });
 
-    // Salvar o PDF
     doc.save(filename);
   };
 
@@ -383,152 +510,255 @@ Júlio's Pizza House
         <h2 className="text-2xl font-bold text-white">Geração de Contratos e Recibos</h2>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-orange-400">Eventos Confirmados</h3>
           {formularios.map((formulario) => (
-            <Card key={formulario.id} className="bg-gray-800/50 backdrop-blur-sm border-gray-700 hover:border-orange-500/50 transition-colors">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h4 className="text-lg font-semibold text-white">{formulario.nome_completo}</h4>
-                    <p className="text-gray-400 text-sm">Data: {formatDate(formulario.data_evento)} às {formatTime(formulario.horario)}</p>
-                    <p className="text-gray-400 text-sm">
-                      {formulario.quantidade_adultos} adultos, {formulario.quantidade_criancas} crianças
-                    </p>
+            <div key={formulario.id} className="space-y-4">
+              <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700 hover:border-orange-500/50 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className="text-lg font-semibold text-white">{formulario.nome_completo}</h4>
+                      <p className="text-gray-400 text-sm">Data: {formatDate(formulario.data_evento)} às {formatTime(formulario.horario)}</p>
+                      <p className="text-gray-400 text-sm">
+                        {formulario.quantidade_adultos} adultos, {formulario.quantidade_criancas} crianças
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-orange-400 font-bold">
+                        R$ {calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, selectedFormulario?.id === formulario.id ? itensAdicionais : []).toFixed(2).replace('.', ',')}
+                      </p>
+                      <p className="text-gray-400 text-sm">Total</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-orange-400 font-bold">
-                      R$ {calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itensAdicionais).toFixed(2).replace('.', ',')}
-                    </p>
-                    <p className="text-gray-400 text-sm">Total</p>
+                  
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    <Button 
+                      size="sm" 
+                      onClick={() => {
+                        setSelectedFormulario(selectedFormulario?.id === formulario.id ? null : formulario);
+                      }}
+                      className="bg-gray-600 hover:bg-gray-700"
+                    >
+                      {selectedFormulario?.id === formulario.id ? 'Fechar' : 'Configurar'}
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => {
+                        setSelectedFormulario(formulario);
+                        gerarContrato(formulario);
+                        setReciboGerado('');
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      <FileText className="mr-1" size={14} />
+                      Gerar Contrato
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      onClick={() => {
+                        setSelectedFormulario(formulario);
+                        gerarRecibo(formulario);
+                        setContratoGerado('');
+                      }}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <FileText className="mr-1" size={14} />
+                      Gerar Recibo
+                    </Button>
                   </div>
-                </div>
-                
-                {/* Seção de itens adicionais */}
-                {selectedFormulario?.id === formulario.id && (
-                  <div className="mb-4 p-4 bg-gray-700/50 rounded-lg">
-                    <h5 className="text-white font-medium mb-3">Itens Adicionais</h5>
-                    
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      <Input
-                        placeholder="Descrição"
-                        value={novoItem.descricao}
-                        onChange={(e) => setNovoItem({...novoItem, descricao: e.target.value})}
-                        className="bg-gray-600 border-gray-500 text-white text-sm"
-                      />
-                      <Input
-                        type="number"
-                        placeholder="Valor"
-                        value={novoItem.valor}
-                        onChange={(e) => setNovoItem({...novoItem, valor: parseFloat(e.target.value) || 0})}
-                        step="any"
-                        className="bg-gray-600 border-gray-500 text-white text-sm"
-                      />
-                      <div className="flex gap-1">
+                </CardContent>
+              </Card>
+
+              {/* Seção expandida diretamente abaixo do card selecionado */}
+              {selectedFormulario?.id === formulario.id && (
+                <Card className="bg-gray-700/50 backdrop-blur-sm border-gray-600">
+                  <CardHeader>
+                    <CardTitle className="text-orange-400 text-lg">Configurações do Contrato</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Seção de itens adicionais */}
+                    <div>
+                      <h5 className="text-white font-medium mb-3 flex items-center">
+                        <Plus className="mr-2" size={16} />
+                        Itens Adicionais
+                      </h5>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
+                        <Input
+                          placeholder="Descrição"
+                          value={novoItem.descricao}
+                          onChange={(e) => setNovoItem({...novoItem, descricao: e.target.value})}
+                          className="bg-gray-600 border-gray-500 text-white text-sm"
+                        />
                         <Input
                           type="number"
-                          placeholder="Qtd"
+                          placeholder="Valor (negativo para desconto)"
+                          value={novoItem.valor}
+                          onChange={(e) => setNovoItem({...novoItem, valor: parseFloat(e.target.value) || 0})}
+                          step="any"
+                          className="bg-gray-600 border-gray-500 text-white text-sm"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Quantidade"
                           value={novoItem.quantidade}
                           onChange={(e) => setNovoItem({...novoItem, quantidade: parseInt(e.target.value) || 1})}
+                          min="1"
                           className="bg-gray-600 border-gray-500 text-white text-sm"
                         />
                         <Button 
                           size="sm" 
-                          onClick={adicionarItem}
+                          onClick={salvarItemAdicional}
                           className="bg-green-600 hover:bg-green-700"
                         >
                           <Plus size={14} />
+                          Adicionar
+                        </Button>
+                      </div>
+                      
+                      {itensAdicionais.map((item, index) => (
+                        <div key={item.id || index} className="flex justify-between items-center mb-2 p-3 bg-gray-600/50 rounded">
+                          <span className="text-white text-sm">
+                            {item.descricao} - {item.quantidade}x R$ {Math.abs(item.valor).toFixed(2).replace('.', ',')}
+                            {item.valor < 0 && <Badge className="ml-2 bg-red-600">Desconto</Badge>}
+                            = R$ {(item.valor * item.quantidade).toFixed(2).replace('.', ',')}
+                          </span>
+                          <Button 
+                            size="sm" 
+                            variant="destructive"
+                            onClick={() => item.id && removerItemAdicional(item.id)}
+                          >
+                            <Trash2 size={12} />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Campo de Valor de Entrada */}
+                    <div>
+                      <label htmlFor="valorEntrada" className="text-sm font-medium text-white mb-2 block">
+                        Valor da Entrada (R$)
+                      </label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="valorEntrada"
+                          type="number"
+                          placeholder="Valor da Entrada"
+                          value={valorEntradaEditavel}
+                          onChange={(e) => setValorEntradaEditavel(e.target.value)}
+                          className="bg-gray-600 border-gray-500 text-white"
+                          step="any"
+                        />
+                        <Button
+                          onClick={handleSalvarValorEntrada}
+                          className="bg-blue-600 hover:bg-blue-700 text-white"
+                          size="sm"
+                        >
+                          Salvar
                         </Button>
                       </div>
                     </div>
-                    
-                    {itensAdicionais.map((item, index) => (
-                      <div key={index} className="flex justify-between items-center mb-2 p-2 bg-gray-600/50 rounded">
-                        <span className="text-white text-sm">
-                          {item.descricao} - {item.quantidade}x R$ {item.valor.toFixed(2).replace('.', ',')}
-                        </span>
-                        <Button 
-                          size="sm" 
-                          variant="destructive"
-                          onClick={() => removerItem(index)}
+
+                    {/* Seção de Parcelamento */}
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <h5 className="text-white font-medium flex items-center">
+                          <Calculator className="mr-2" size={16} />
+                          Parcelamento do Saldo
+                        </h5>
+                        <Button
+                          size="sm"
+                          onClick={() => setShowParcelamento(!showParcelamento)}
+                          className="bg-purple-600 hover:bg-purple-700"
                         >
-                          <Trash2 size={12} />
+                          {showParcelamento ? 'Cancelar' : 'Configurar'}
                         </Button>
                       </div>
-                    ))}
-                  </div>
-                )}
-                
-                {/* Campo de Valor de Entrada Editável */}
-                {selectedFormulario?.id === formulario.id && (
-                  <div className="mt-4 space-y-2">
-                    <label htmlFor="valorEntrada" className="text-sm font-medium text-white">
-                      Valor da Entrada (R$)
-                    </label>
-                    <Input
-                      id="valorEntrada"
-                      type="number"
-                      placeholder="Valor da Entrada"
-                      value={valorEntradaEditavel}
-                      onChange={(e) => setValorEntradaEditavel(e.target.value)}
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
-                    <Button
-                      onClick={handleSalvarValorEntrada}
-                      className="bg-blue-600 hover:bg-blue-700 text-white mt-2"
-                      size="sm"
-                    >
-                      Salvar Entrada
-                    </Button>
-                  </div>
-                )}
-                
-                <div className="flex space-x-2 mt-4">
-                  <Button 
-                    size="sm" 
-                    onClick={() => {
-                      setSelectedFormulario(formulario);
-                      if (selectedFormulario?.id !== formulario.id) {
-                        setItensAdicionais([]);
-                      }
-                    }}
-                    className="bg-gray-600 hover:bg-gray-700"
-                  >
-                    Selecionar
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={() => {
-                      setSelectedFormulario(formulario);
-                      gerarContrato(formulario);
-                      setReciboGerado('');
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <FileText className="mr-1" size={14} />
-                    Gerar Contrato
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    onClick={() => {
-                      setSelectedFormulario(formulario);
-                      gerarRecibo(formulario);
-                      setContratoGerado('');
-                    }}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <FileText className="mr-1" size={14} />
-                    Gerar Recibo
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+
+                      {showParcelamento && (
+                        <div className="space-y-3 p-4 bg-gray-600/30 rounded">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            <Input
+                              type="number"
+                              placeholder="Número de parcelas"
+                              value={numeroParcelas}
+                              onChange={(e) => setNumeroParcelas(parseInt(e.target.value) || 1)}
+                              min="1"
+                              max="24"
+                              className="bg-gray-600 border-gray-500 text-white text-sm"
+                            />
+                            <Input
+                              type="date"
+                              placeholder="Data da primeira parcela"
+                              value={primeiraParcela}
+                              onChange={(e) => setPrimeiraParcela(e.target.value)}
+                              className="bg-gray-600 border-gray-500 text-white text-sm"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={gerarParcelas}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Gerar Parcelas
+                            </Button>
+                          </div>
+
+                          {parcelas.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-sm text-gray-300">
+                                Saldo a parcelar: R$ {(calcularValorTotal(selectedFormulario.quantidade_adultos, selectedFormulario.quantidade_criancas, itensAdicionais) - parseFloat(String(valorEntradaEditavel) || '0')).toFixed(2).replace('.', ',')}
+                              </p>
+                              {parcelas.map((parcela, index) => (
+                                <div key={index} className="flex justify-between items-center p-2 bg-gray-700/50 rounded text-sm">
+                                  <span className="text-white">
+                                    Parcela {parcela.numero_parcela}: R$ {parcela.valor_parcela.toFixed(2).replace('.', ',')}
+                                  </span>
+                                  <span className="text-gray-300">
+                                    {formatDate(parcela.data_vencimento)}
+                                  </span>
+                                </div>
+                              ))}
+                              <Button
+                                size="sm"
+                                onClick={salvarParcelas}
+                                className="bg-green-600 hover:bg-green-700 w-full"
+                              >
+                                Salvar Parcelamento
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Parcelas salvas */}
+                      {!showParcelamento && parcelas.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-green-400 font-medium">Parcelamento Configurado:</p>
+                          {parcelas.map((parcela, index) => (
+                            <div key={index} className="flex justify-between items-center p-2 bg-green-900/20 rounded text-sm">
+                              <span className="text-white">
+                                Parcela {parcela.numero_parcela}: R$ {parcela.valor_parcela.toFixed(2).replace('.', ',')}
+                              </span>
+                              <Badge className={parcela.status === 'pago' ? 'bg-green-600' : 'bg-yellow-600'}>
+                                {parcela.status}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           ))}
         </div>
 
+        {/* Preview do contrato/recibo */}
         {(contratoGerado || reciboGerado) && (
-          <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700 sticky top-4">
+          <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle className="text-orange-400">
