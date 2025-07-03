@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { supabase } from '@/integrations/supabase/client';
-import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 
 interface CarouselImage {
@@ -64,8 +63,8 @@ export const HeroCarousel = () => {
       plugins={[
         Autoplay({
           delay: 4000,
-          stopOnInteraction: false, // <-- garante autoplay mesmo após interação
-          stopOnMouseEnter: false,  // <-- não pausa ao passar mouse (desktop)
+          stopOnInteraction: false,
+          stopOnMouseEnter: false,
         }),
       ]}
     >

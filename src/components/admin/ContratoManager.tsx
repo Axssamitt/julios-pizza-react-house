@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -95,7 +94,7 @@ export const ContratoManager = () => {
       setItensAdicionais(data.map(item => ({
         id: item.id,
         descricao: item.descricao,
-        valor: parseFloat(item.valor),
+        valor: parseFloat(item.valor.toString()),
         quantidade: item.quantidade
       })));
     }
@@ -112,7 +111,7 @@ export const ContratoManager = () => {
       setParcelas(data.map(parcela => ({
         id: parcela.id,
         numero_parcela: parcela.numero_parcela,
-        valor_parcela: parseFloat(parcela.valor_parcela),
+        valor_parcela: parseFloat(parcela.valor_parcela.toString()),
         data_vencimento: parcela.data_vencimento,
         status: parcela.status
       })));
@@ -127,7 +126,7 @@ export const ContratoManager = () => {
       .insert({
         formulario_id: selectedFormulario.id,
         descricao: novoItem.descricao,
-        valor: novoItem.valor,
+        valor: novoItem.valor.toString(),
         quantidade: novoItem.quantidade
       });
 
@@ -188,7 +187,7 @@ export const ContratoManager = () => {
         parcelas.map(parcela => ({
           formulario_id: selectedFormulario.id,
           numero_parcela: parcela.numero_parcela,
-          valor_parcela: parcela.valor_parcela,
+          valor_parcela: parcela.valor_parcela.toString(),
           data_vencimento: parcela.data_vencimento,
           status: parcela.status
         }))
