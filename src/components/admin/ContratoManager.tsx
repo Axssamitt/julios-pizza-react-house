@@ -424,6 +424,14 @@ CPF: 034.988.389-03
     
     const percentualEntradaReal = calcularPercentualEntrada(entradaRecibo, valorTotal);
     
+    let parcelamentoTextoRecibo = '';
+    if (parcelas.length > 0) {
+      parcelamentoTextoRecibo = '\n\nPARCELAMENTO DO SALDO:\n';
+      parcelas.forEach(parcela => {
+        parcelamentoTextoRecibo += `• Parcela ${parcela.numero_parcela}: R$ ${parcela.valor_parcela.toFixed(2).replace('.', ',')} - Vencimento: ${formatDate(parcela.data_vencimento)}\n`;
+      });
+    }
+    
     const recibo = `
 JULIO'S PIZZA HOUSE
 RECIBO DE ENTRADA
@@ -450,7 +458,7 @@ RESUMO FINANCEIRO:
 • Valor total do serviço: R$ ${valorTotal.toFixed(2).replace('.', ',')}
 • Entrada (${percentualEntradaReal}%): R$ ${entradaRecibo.toFixed(2).replace('.', ',')}
 • Saldo restante: R$ ${(valorTotal - entradaRecibo).toFixed(2).replace('.', ',')}
-  (a ser pago até o dia anterior ao evento)
+  (a ser pago até o dia anterior ao evento)${parcelamentoTextoRecibo}
 
 Data de emissão: ${new Date().toLocaleDateString('pt-BR')}
 
