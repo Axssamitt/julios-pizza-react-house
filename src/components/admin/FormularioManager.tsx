@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Eye, Trash2, Calendar, Clock, Users, Phone, MapPin } from 'lucide-react';
 import { CalendarWithHighlight } from './CalendarWithHighlight';
+import { NovoFormularioModal } from './NovoFormularioModal';
 
 interface Formulario {
   id: string;
@@ -163,6 +163,7 @@ export const FormularioManager = () => {
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <h2 className="text-2xl font-bold">Formulários de Contato</h2>
         <div className="flex flex-col md:flex-row gap-2 md:items-center">
+          <NovoFormularioModal onFormularioAdicionado={fetchFormularios} />
           <input
             type="text"
             placeholder="Filtrar por nome (parcial) ou CPF (completo)"
