@@ -333,68 +333,45 @@ export const ContratoManager = () => {
     
     const contrato = `
 JULIO'S PIZZA HOUSE
-CONTRATO DE PRESTAÇÃO DE SERVIÇOS
 
-CONTRATANTE: ${formulario.nome_completo.toUpperCase()}
-CPF: ${formulario.cpf}
-Endereço: ${formulario.endereco.toUpperCase()}
+CONTRATANTE: ${formulario.nome_completo.toUpperCase()}, CPF/CNPJ: nº${formulario.cpf}, residente em Rua: ${formulario.endereco.toUpperCase()}
 
-CONTRATADA: JULIO'S PIZZA HOUSE
-Endereço: Rua Alzira Postali Gewrher, nº 119
-Bairro: Jardim Catuai, CEP: 86086-230
-Londrina - Paraná
-CPF: 034.988.389-03
-Responsável: Sr. Júlio Cesar Fermino
+CONTRATADA: JULIO'S PIZZA HOUSE, com sede em Londrina, na Rua Alzira Postali Gewrher, nº 119, bairro Jardim Catuai, Cep 86086-230, no Estado Paraná, inscrita no CPF sob o nº 034.988.389-03, neste ato representada pelo Responsável Sr. Júlio Cesar Fermino.
 
-OBJETO DO CONTRATO
+As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Prestação de Serviços de Rodizio de pizza para festa, que se regerá pelas cláusulas seguintes e pelas condições de preço, forma e termo de pagamento descritas no presente.
 
-O presente contrato tem por objeto a prestação de serviços de rodízio de pizza para evento que se realizará em:
+DO OBJETO DO CONTRATO
 
-Data: ${formatDate(formulario.data_evento)}
-Horário: ${formatTime(formulario.horario)} às ${String(parseInt(formulario.horario.split(':')[0]) + 3).padStart(2, '0')}:${formulario.horario.split(':')[1]}
-Local: ${formulario.endereco_evento.toUpperCase()}
+Cláusula 1ª. É objeto do presente contrato a prestação pela CONTRATADA à CONTRATANTE do serviço de rodizio de pizza, em evento que se realizará na data de ${formatDate(formulario.data_evento)}, no endereço / local: ${formulario.endereco_evento.toUpperCase()}.
 
-DETALHES DO EVENTO
+O EVENTO
 
-Número de pessoas confirmadas:
-• Adultos: ${formulario.quantidade_adultos} pessoas
-• Crianças (5-9 anos): ${formulario.quantidade_criancas} pessoas
-• Total: ${formulario.quantidade_adultos + formulario.quantidade_criancas} pessoas${itensTexto}
+Cláusula 2ª. O evento, para cuja realização são contratados os serviços de Rodizio de Pizza, é a festa de confraternização da CONTRATANTE, e contará com a presença de aproximadamente ${formulario.quantidade_adultos} adultos${formulario.quantidade_criancas > 0 ? ` e ${formulario.quantidade_criancas} crianças` : ''} a serem confirmados uma semana antes do evento.
+Parágrafo único. O evento realizar-se-á no horário e local indicado no caput da cláusula 1ª, devendo o serviço de rodizio de pizza a ser prestado das ${formatTime(formulario.horario)} até às ${String(parseInt(formulario.horario.split(':')[0]) + 3).padStart(2, '0')}:${formulario.horario.split(':')[1]} horas.
 
 OBRIGAÇÕES DA CONTRATANTE
 
-A CONTRATANTE deverá:
-• Fornecer todas as informações necessárias
-• Efetuar o pagamento conforme estabelecido
-• Disponibilizar local ventilado e tomada 220V
+Cláusula 3ª. A CONTRATANTE deverá fornecer à CONTRATADA todas as informações necessárias à realização adequada do serviço de rodizio de pizza, devendo especificar os detalhes do evento, necessários ao perfeito fornecimento do serviço, e a forma como este deverá ser prestado.
+
+Cláusula 4ª. A CONTRATANTE deverá efetuar o pagamento na forma e condições estabelecidas na cláusula 9ª.
 
 OBRIGAÇÕES DA CONTRATADA
 
-A CONTRATADA se compromete a:
-• Fornecer rodízio de pizza de alta qualidade
-• Disponibilizar pelo menos 1 pizzaiolo e ${Math.ceil((formulario.quantidade_adultos + formulario.quantidade_criancas) / 30)} garçom(s)
-• Manter funcionários uniformizados
-• Preparar quantidade suficiente para até 10% a mais
+Cláusula 5ª. É dever da CONTRATADA oferecer um serviço de rodizio pizza de acordo com as especificações da CONTRATANTE, devendo o serviço iniciar-se às ${formatTime(formulario.horario)} e terminar às ${String(parseInt(formulario.horario.split(':')[0]) + 3).padStart(2, '0')}:${formulario.horario.split(':')[1]} horas.
+Parágrafo único. A CONTRATADA está obrigada a fornecer aos convidados do CONTRATANTE produtos de alta qualidade, que deverão ser preparados e servidos dentro de rigorosas normas de higiene e limpeza.
+Obs: O excedente de horário será cobrado 300,00 (trezentos reais) a cada meia hora do horário ultrapassado.
 
-OBSERVAÇÃO: Excedente de horário será cobrado R$ 300,00 a cada meia hora ultrapassada.
-\f
-VALORES E FORMA DE PAGAMENTO
+Cláusula 6ª. A CONTRATADA se compromete a fornecer o cardápio escolhido pela CONTRATANTE, cujas especificações, inclusive de quantidade a ser servida, encontram-se em documento anexo ao presente contrato.
 
-Valor por pessoa:
-• Adultos: R$ ${valorAdulto.toFixed(2).replace('.', ',')} cada
-• Crianças: R$ ${valorCrianca.toFixed(2).replace('.', ',')} cada
+Cláusula 7ª. A CONTRATADA fornecerá pelo menos 1 pizzaiolo e ${Math.ceil((formulario.quantidade_adultos + formulario.quantidade_criancas) / 30)} garçom(s) para servir os convidados nas mesas.
 
-VALOR TOTAL DO SERVIÇO: R$ ${valorTotal.toFixed(2).replace('.', ',')}
+Cláusula 8ª. A CONTRATADA obriga-se a manter todos os seus empregados devidamente uniformizados durante a prestação dos serviços ora contratados, garantindo que todos eles possuem os requisitos de urbanidade, moralidade e educação.
 
-Forma de pagamento:
-• Entrada (${percentualEntradaReal}%): R$ ${entrada.toFixed(2).replace('.', ',')}
-  (Depositar na Caixa Econômica - Ag: 1479 - Conta: 00028090-5)
-• Restante: R$ ${restante.toFixed(2).replace('.', ',')}
-  (A ser pago até o dia anterior ao evento)${parcelamentoTexto}
+DO PREÇO E DAS CONDIÇÕES DE PAGAMENTO
 
-CANCELAMENTO
+Cláusula 9ª. O serviço contratado no presente instrumento será remunerado dependendo do número de pessoas confirmadas uma semana antes do evento. A contratada garante que a quantidade de comida seja suficiente para atender o número de pessoas presentes, estando preparada para atender até 10% a mais do número de pessoas confirmadas, cobrando o valor de R$ ${valorAdulto.toFixed(2).replace('.', ',')} por adulto e R$ ${valorCrianca.toFixed(2).replace('.', ',')} por crianças no total de R$ ${valorTotal.toFixed(2).replace('.', ',')}${itensTexto}. O serviço deve ser pago em dinheiro, com uma entrada de R$ ${entrada.toFixed(2).replace('.', ',')} (depositados em conta, caixa econômica Ag: 1479 conta: 00028090-5 conta corrente) ANTECIPADO, a diferença no ato da festa no valor de R$ ${restante.toFixed(2).replace('.', ',')}.${parcelamentoTexto}
 
-O contrato pode ser rescindido por qualquer parte com comunicação formal até 10 dias antes do evento, com devolução da entrada. Cancelamento após pagamento da entrada: valor será creditado para futura contratação em até 30 dias.
+Cláusula 10ª. O presente contrato poderá ser rescindido unilateralmente por qualquer uma das partes, desde que haja comunicação formal por escrito justificando o motivo. Deverá acontecer, além disso, até 10 dias corridos, antes da data prevista para o evento, com devolução de 100% da entrada. Caso o cliente queira ou precise cancelar ou mudar a data da reserva, após ter pago a entrada, a contratada descontará o valor pago na futura contratação do serviço se acontecer nos primeiros 30 dias corridos após o dia antecipadamente reservado.
 
 LONDRINA, ${new Date().toLocaleDateString('pt-BR')}
 
