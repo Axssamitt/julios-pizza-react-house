@@ -1,7 +1,6 @@
 
 import React from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-import Autoplay from 'embla-carousel-autoplay';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
@@ -34,11 +33,21 @@ export const HeroCarousel = () => {
     queryFn: fetchCarouselImages,
   });
 
-  const [emblaRef] = useEmblaCarousel({
+  const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
     align: 'center',
     containScroll: 'trimSnaps'
-  }, [Autoplay({ delay: 4000, stopOnInteraction: false })]);
+  });
+
+  React.useEffect(() => {
+    if (emblaApi) {
+      const autoplay = setInterval(() => {
+        emblaApi.scrollNext();
+      }, 4000);
+
+      return () => clearInterval(autoplay);
+    }
+  }, [emblaApi]);
 
   if (error) {
     console.error('Erro no carrossel:', error);
@@ -78,8 +87,8 @@ export const HeroCarousel = () => {
               className="w-full h-full object-cover"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-              <h2 className="text-white text-lg md:text-2xl lg:text-3xl font-bold text-center px-4 max-w-4xl">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+              <h2 className="text-white text-lg md:text-xl lg:text-2xl font-bold text-center">
                 {image.titulo}
               </h2>
             </div>
