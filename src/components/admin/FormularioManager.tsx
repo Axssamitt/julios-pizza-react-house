@@ -123,25 +123,27 @@ export const FormularioManager = () => {
   };
 
   // Filtro aprimorado por nome (parcial) e CPF (completo)
-  const formulariosFiltrados = formularios.filter((formulario) => {
-    const termo = searchTerm.trim().toLowerCase();
-    
-    // Busca parcial por nome (aceita partes do nome)
-    const nomeMatch = formulario.nome_completo.toLowerCase().includes(termo);
-    
-    // Busca exata por CPF (removendo formatação)
-    const cpfLimpo = formulario.cpf.replace(/\D/g, '');
-    const termoLimpo = termo.replace(/\D/g, '');
-    const cpfMatch = (termoLimpo && cpfLimpo).includes(termoLimpo);
-    
-    const nomeCpfMatch = termo === '' || nomeMatch || cpfMatch;
-    
-    const dataMatch = searchDate
-      ? formulario.data_evento === searchDate
-      : true;
-    
-    return nomeCpfMatch && dataMatch;
-  });
+  const formulariosFiltrados = formularios
+    .filter((formulario) => {
+      const termo = searchTerm.trim().toLowerCase();
+      
+      // Busca parcial por nome (aceita partes do nome)
+      const nomeMatch = formulario.nome_completo.toLowerCase().includes(termo);
+      
+      // Busca exata por CPF (removendo formatação)
+      const cpfLimpo = formulario.cpf.replace(/\D/g, '');
+      const termoLimpo = termo.replace(/\D/g, '');
+      const cpfMatch = (termoLimpo && cpfLimpo).includes(termoLimpo);
+      
+      const nomeCpfMatch = termo === '' || nomeMatch || cpfMatch;
+      
+      const dataMatch = searchDate
+        ? formulario.data_evento === searchDate
+        : true;
+      
+      return nomeCpfMatch && dataMatch;
+    })
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); // <-- garante ordem
 
   // Obter datas únicas dos formulários para destacar no calendário
   const datasComRegistros = [...new Set(formularios.map(f => f.data_evento))];

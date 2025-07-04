@@ -1,12 +1,9 @@
-
 import React from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
+import Autoplay from 'embla-carousel-autoplay';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-
-// Removemos o import do autoplay para evitar problemas de compatibilidade
-// import Autoplay from 'embla-carousel-autoplay';
 
 interface CarouselImage {
   id: string;
@@ -37,12 +34,15 @@ export const HeroCarousel = () => {
     queryFn: fetchCarouselImages,
   });
 
-  // Configuração sem autoplay para evitar erros de compatibilidade
-  const [emblaRef] = useEmblaCarousel({
-    loop: true,
-    align: 'center',
-    containScroll: 'trimSnaps'
-  });
+  // Ativa autoplay
+  const [emblaRef] = useEmblaCarousel(
+    {
+      loop: true,
+      align: 'center',
+      containScroll: 'trimSnaps'
+    },
+    [Autoplay({ delay: 3500, stopOnInteraction: false })]
+  );
 
   if (error) {
     console.error('Erro no carrossel:', error);
@@ -82,8 +82,8 @@ export const HeroCarousel = () => {
               className="w-full h-full object-cover"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-              <h2 className="text-white text-4xl font-bold text-center px-4">
+            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-0 flex items-end justify-center pb-0">
+              <h2 className="text-white text-lg font-semibold text-center px-4">
                 {image.titulo}
               </h2>
             </div>
