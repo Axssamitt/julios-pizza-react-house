@@ -126,22 +126,20 @@ export const FormularioManager = () => {
   const formulariosFiltrados = formularios
     .filter((formulario) => {
       const termo = searchTerm.trim().toLowerCase();
-      
-      // Busca parcial por nome (aceita partes do nome)
-      const nomeMatch = formulario.nome_completo.toLowerCase().includes(termo);
-      
-      // Busca exata por CPF (removendo formatação)
-      const cpfLimpo = formulario.cpf.replace(/\D/g, '');
+      if (!termo) return true;
+
+      // Junta nome e CPF (sem formatação) em uma única string
+      const nomeCpf = (
+        formulario.nome_completo +
+        ' ' +
+        formulario.cpf.replace(/\D/g, '')
+      ).toLowerCase();
+
+      // Remove formatação do termo se for número
       const termoLimpo = termo.replace(/\D/g, '');
-      const cpfMatch = (termoLimpo && cpfLimpo).includes(termoLimpo);
-      
-      const nomeCpfMatch = termo === '' || nomeMatch || cpfMatch;
-      
-      const dataMatch = searchDate
-        ? formulario.data_evento === searchDate
-        : true;
-      
-      return nomeCpfMatch && dataMatch;
+      const termoBusca = termoLimpo.length >= 3 ? termoLimpo : termo;
+
+      return nomeCpf.includes(termoBusca);
     })
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); // <-- garante ordem
 
