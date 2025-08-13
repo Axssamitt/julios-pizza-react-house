@@ -58,6 +58,7 @@ export const ContratoManager = () => {
   const [numeroParcelas, setNumeroParcelas] = useState<number>(1);
   const [primeiraParcela, setPrimeiraParcela] = useState<string>('');
   const [showParcelamento, setShowParcelamento] = useState<boolean>(false);
+  const [clausulaCancelamentoOpcao, setClausulaCancelamentoOpcao] = useState<'padrao' | 'alternativa'>('padrao');
 
   useEffect(() => {
     fetchFormularios();
@@ -331,6 +332,22 @@ export const ContratoManager = () => {
       });
     }
 
+    // Texto da cláusula 10 conforme opção selecionada
+    let clausula10 = '';
+    if (clausulaCancelamentoOpcao === 'padrao') {
+      clausula10 = `
+CANCELAMENTO
+
+Cláusula 10. O presente contrato poderá ser rescindido unilateralmente por qualquer uma das partes, desde que haja comunicação formal por escrito justificando o motivo. Deverá acontecer, além disso, até 10 dias corridos antes da data prevista para o evento, com devolução de 100% do valor já pago. Caso o cliente queira ou precise cancelar ou mudar a data da reserva, a contratada descontará o valor pago na futura contratação do serviço se acontecer nos primeiros 30 dias corridos após o dia antecipadamente reservado.
+`;
+    } else {
+      clausula10 = `
+CANCELAMENTO
+
+Cláusula 10. O presente contrato poderá ser rescindido unilateralmente por qualquer uma das partes, desde que haja comunicação formal por escrito justificando o motivo. Deverá acontecer, além disso, até 10 dias corridos antes da data prevista para o evento: Para cancelamentos até 30 dias antes da data do evento, será devolvido 60% do valor já pago. Para cancelamentos com prazo menor que 30 dias, será devolvido 40% do valor já pago. Caso o cliente queira ou precise cancelar ou mudar a data da reserva, a contratada descontará o valor pago na futura contratação do serviço se acontecer nos primeiros 30 dias corridos após o dia antecipadamente reservado.
+`;
+    }
+
     const contrato = `
 JULIO'S PIZZA HOUSE
 
@@ -379,9 +396,7 @@ Forma de pagamento:
 • Restante: R$ ${restante.toFixed(2).replace('.', ',')}
   (A ser pago até o dia anterior ao evento)${parcelamentoTexto}
 
-CANCELAMENTO
-
-Cláusula 10. O presente contrato poderá ser rescindido unilateralmente por qualquer uma das partes, desde que haja comunicação formal por escrito justificando o motivo. Deverá acontecer, além disso, até 10 dias corridos antes da data prevista para o evento, com devolução de 100% do valor já pago. Caso o cliente queira ou precise cancelar ou mudar a data da reserva, a contratada descontará o valor pago na futura contratação do serviço se acontecer nos primeiros 30 dias corridos após o dia antecipadamente reservado.
+${clausula10}
 
 LONDRINA, ${new Date().toLocaleDateString('pt-BR')}
 
@@ -471,30 +486,38 @@ Júlio's Pizza House
     const marginLeft = 12;
     const marginRight = 12;
     const marginTop = 15;
+    // Margem inferior reduzida
+    const marginBottom = 10;
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const usableWidth = pageWidth - marginLeft - marginRight;
-    const usableHeight = pageHeight - marginTop - 15;
-    
-    const sections = content.split('\f');
-    
-    sections.forEach((section, sectionIndex) => {
-      if (sectionIndex > 0) {
-        doc.addPage();
-      }
-      
-      const lines = doc.splitTextToSize(section.trim(), usableWidth);
-      
+    const usableHeight = pageHeight - marginTop - marginBottom;
+
+    // Quebra de página após a cláusula 6
+    const clausula6Regex = /Cláusula 6ª\..*?(?=Cláusula 7ª\.|Cláusula 7\.|Cláusula 7)/s;
+    const match = content.match(clausula6Regex);
+
+    let partes: string[] = [];
+    if (match) {
+      const clausula6End = match.index! + match[0].length;
+      partes = [
+        content.slice(0, clausula6End).trim(),
+        content.slice(clausula6End).trim()
+      ];
+    } else {
+      partes = [content];
+    }
+
+    partes.forEach((parte, idx) => {
+      if (idx > 0) doc.addPage();
+      const lines = doc.splitTextToSize(parte, usableWidth);
+
       let currentY = marginTop;
-      let pageCount = 0;
-      
       for (let i = 0; i < lines.length; i++) {
-        if (currentY + 5 > usableHeight) {
+        if (currentY + 5 > pageHeight - marginBottom) {
           doc.addPage();
           currentY = marginTop;
-          pageCount++;
         }
-        
         doc.text(lines[i], marginLeft, currentY);
         currentY += 5;
       }
@@ -748,41 +771,56 @@ Júlio's Pizza House
                         </div>
                       )}
                     </div>
+
+                    {/* Selecionador de cláusula de cancelamento */}
+                    <div>
+                      <label className="text-sm font-medium text-white mb-2 block">
+                        Cláusula de Cancelamento
+                      </label>
+                      <select
+                        value={clausulaCancelamentoOpcao}
+                        onChange={e => setClausulaCancelamentoOpcao(e.target.value as 'padrao' | 'alternativa')}
+                        className="bg-gray-600 border-gray-500 text-white p-2 rounded"
+                      >
+                        <option value="padrao">Devolução de 100% até 10 dias antes (padrão)</option>
+                        <option value="alternativa">Devolução de 60% até 30 dias antes, 40% para menos de 30 dias</option>
+                      </select>
+                    </div>
+
+                    {/* Preview do contrato/recibo - MOVIDO PARA CÁ */}
+                    {(contratoGerado || reciboGerado) && (
+                      <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700 mt-6">
+                        <CardHeader>
+                          <div className="flex justify-between items-center">
+                            <CardTitle className="text-orange-400">
+                              {contratoGerado ? 'Contrato Gerado' : 'Recibo Gerado'}
+                            </CardTitle>
+                            <Button 
+                              size="sm"
+                              onClick={() => downloadPDF(
+                                contratoGerado || reciboGerado,
+                                `${contratoGerado ? 'contrato' : 'recibo'}_${selectedFormulario?.nome_completo.replace(/\s+/g, '_')}.pdf`
+                              )}
+                              className="bg-orange-600 hover:bg-orange-700"
+                            >
+                              <Download className="mr-1" size={14} />
+                              Download PDF
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="bg-white text-black p-4 rounded text-xs whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">
+                            {contratoGerado || reciboGerado}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
                   </CardContent>
                 </Card>
               )}
             </div>
           ))}
         </div>
-
-        {/* Preview do contrato/recibo */}
-        {(contratoGerado || reciboGerado) && (
-          <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-orange-400">
-                  {contratoGerado ? 'Contrato Gerado' : 'Recibo Gerado'}
-                </CardTitle>
-                <Button 
-                  size="sm"
-                  onClick={() => downloadPDF(
-                    contratoGerado || reciboGerado,
-                    `${contratoGerado ? 'contrato' : 'recibo'}_${selectedFormulario?.nome_completo.replace(/\s+/g, '_')}.pdf`
-                  )}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  <Download className="mr-1" size={14} />
-                  Download PDF
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-white text-black p-4 rounded text-xs whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">
-                {contratoGerado || reciboGerado}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
