@@ -42,7 +42,7 @@ class Query<T = any> implements PromiseLike<{ data: T | null; error: any }> {
   private limitN?: number;
   private selectCols = '*';
   private singleRow = false;
-  private maybeSingle = false;
+  private maybeSingleRow = false;
 
   constructor(private table: string, private op: 'select'|'insert'|'update'|'delete', private payload?: any) {}
 
