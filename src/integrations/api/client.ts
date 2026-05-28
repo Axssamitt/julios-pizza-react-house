@@ -81,7 +81,7 @@ class Query<T = any> implements PromiseLike<{ data: T | null; error: any }> {
       if (this.op === 'select') {
         data = await http(`/rest.php?${this.buildQS()}`);
         if (this.singleRow)      data = data[0] ?? null;
-        else if (this.maybeSingle) data = data[0] ?? null;
+        else if (this.maybeSingleRow) data = data[0] ?? null;
       } else if (this.op === 'insert') {
         data = await http(`/rest.php?table=${this.table}`, {
           method: 'POST', body: JSON.stringify(this.payload),
