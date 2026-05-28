@@ -63,7 +63,7 @@ class Query<T = any> implements PromiseLike<{ data: T | null; error: any }> {
   }
   limit(n: number) { this.limitN = n; return this; }
   single()      { this.singleRow = true; return this; }
-  maybeSingle() { this.maybeSingle = true; return this; }
+  maybeSingle() { this.maybeSingleRow = true; return this; }
 
   private buildQS(): string {
     const params = new URLSearchParams();
