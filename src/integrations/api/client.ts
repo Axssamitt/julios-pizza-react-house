@@ -42,7 +42,7 @@ class Query<T = any> implements PromiseLike<{ data: T | null; error: any }> {
   private limitN?: number;
   private selectCols = '*';
   private singleRow = false;
-  private maybeSingle = false;
+  private maybeSingleRow = false;
 
   constructor(private table: string, private op: 'select'|'insert'|'update'|'delete', private payload?: any) {}
 
@@ -63,7 +63,7 @@ class Query<T = any> implements PromiseLike<{ data: T | null; error: any }> {
   }
   limit(n: number) { this.limitN = n; return this; }
   single()      { this.singleRow = true; return this; }
-  maybeSingle() { this.maybeSingle = true; return this; }
+  maybeSingle() { this.maybeSingleRow = true; return this; }
 
   private buildQS(): string {
     const params = new URLSearchParams();
@@ -81,7 +81,7 @@ class Query<T = any> implements PromiseLike<{ data: T | null; error: any }> {
       if (this.op === 'select') {
         data = await http(`/rest.php?${this.buildQS()}`);
         if (this.singleRow)      data = data[0] ?? null;
-        else if (this.maybeSingle) data = data[0] ?? null;
+        else if (this.maybeSingleRow) data = data[0] ?? null;
       } else if (this.op === 'insert') {
         data = await http(`/rest.php?table=${this.table}`, {
           method: 'POST', body: JSON.stringify(this.payload),
