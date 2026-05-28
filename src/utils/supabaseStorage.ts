@@ -38,36 +38,9 @@ async function convertToJpg(file: File): Promise<File> {
     reader.readAsDataURL(file);
   });
 }
-// Função para criar buckets se não existirem
+// No backend PHP/MySQL os buckets são pastas criadas automaticamente pelo upload.php
 export const initializeStorage = async () => {
-  try {
-    // Verificar se o bucket 'images' existe
-    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-    
-    if (listError) {
-      console.error('Erro ao listar buckets:', listError);
-      return;
-    }
-
-    const imagesBucket = buckets?.find(bucket => bucket.name === 'images');
-    
-    if (!imagesBucket) {
-      // Criar bucket 'images' se não existir
-      const { data, error } = await supabase.storage.createBucket('images', {
-        public: true,
-        allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
-        fileSizeLimit: 5242880 // 5MB
-      });
-      
-      if (error) {
-        console.error('Erro ao criar bucket images:', error);
-      } else {
-        console.log('Bucket images criado com sucesso');
-      }
-    }
-  } catch (error) {
-    console.error('Erro ao inicializar storage:', error);
-  }
+  // no-op: o backend cria a pasta de uploads automaticamente
 };
 
 // Função para upload de imagem
