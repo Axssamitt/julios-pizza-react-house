@@ -3,8 +3,13 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
+interface PageView {
+  date: string;
+  views: number;
+}
+
 interface DashboardChartProps {
-  pageViews: any[];
+  pageViews: PageView[];
 }
 
 export const DashboardChart = ({ pageViews }: DashboardChartProps) => {

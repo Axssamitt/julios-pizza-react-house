@@ -81,11 +81,12 @@ export const UserManager = () => {
       setFormData({ nome: '', email: '', senha: '' });
       setDialogOpen(false);
       fetchUsuarios();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao criar usuário:', error);
+      const message = error instanceof Error ? error.message : 'Não foi possível criar o usuário.';
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível criar o usuário.",
+        description: message,
         variant: "destructive",
       });
     }
@@ -102,7 +103,7 @@ export const UserManager = () => {
 
   const handleUpdate = async (id: string) => {
     try {
-      const updateData: any = {
+      const updateData: { nome: string; email: string; senha?: string } = {
         nome: editData.nome,
         email: editData.email
       };
@@ -126,11 +127,12 @@ export const UserManager = () => {
       setEditingId(null);
       setEditData({ nome: '', email: '', senha: '' });
       fetchUsuarios();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao atualizar usuário:', error);
+      const message = error instanceof Error ? error.message : 'Não foi possível atualizar o usuário.';
       toast({
         title: "Erro",
-        description: error.message || "Não foi possível atualizar o usuário.",
+        description: message,
         variant: "destructive",
       });
     }
@@ -152,11 +154,12 @@ export const UserManager = () => {
         description: "Usuário removido com sucesso!",
       });
       fetchUsuarios();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Erro ao excluir usuário:', error);
+      const message = error instanceof Error ? error.message : 'Não foi possível remover o usuário.';
       toast({
         title: "Erro",
-        description: "Não foi possível remover o usuário.",
+        description: message,
         variant: "destructive",
       });
     }

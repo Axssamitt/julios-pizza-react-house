@@ -71,12 +71,13 @@ const Auth = () => {
       });
 
       navigate('/admin');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro no login:', error);
-      setError(error.message);
+      const message = error instanceof Error ? error.message : 'Erro no login';
+      setError(message);
       toast({
         title: "Erro",
-        description: error.message,
+        description: message,
         variant: "destructive",
       });
     } finally {

@@ -58,7 +58,7 @@ export const ContratoManager = () => {
   const [numeroParcelas, setNumeroParcelas] = useState<number>(1);
   const [primeiraParcela, setPrimeiraParcela] = useState<string>('');
   const [showParcelamento, setShowParcelamento] = useState<boolean>(false);
-  const [clausulaCancelamentoOpcao, setClausulaCancelamentoOpcao] = useState<'padrao' | 'alternativa'>('padrao');
+  const [clausulaCancelamentoOpcao, setClausulaCancelamentoOpcao] = useState<'padrao' | 'alternativa' | 'semDevolucao'>('padrao');
 
   useEffect(() => {
     fetchFormularios();
@@ -340,11 +340,17 @@ CANCELAMENTO
 
 Cláusula 10. O presente contrato poderá ser rescindido unilateralmente por qualquer uma das partes, desde que haja comunicação formal por escrito justificando o motivo. Deverá acontecer, além disso, até 10 dias corridos antes da data prevista para o evento, com devolução de 100% do valor já pago. Caso o cliente queira ou precise cancelar ou mudar a data da reserva, a contratada descontará o valor pago na futura contratação do serviço se acontecer nos primeiros 30 dias corridos após o dia antecipadamente reservado.
 `;
-    } else {
+    } else if (clausulaCancelamentoOpcao === 'alternativa') {
       clausula10 = `
 CANCELAMENTO
 
 Cláusula 10. O presente contrato poderá ser rescindido unilateralmente por qualquer uma das partes, desde que haja comunicação formal por escrito justificando o motivo. Deverá acontecer, além disso, até 10 dias corridos antes da data prevista para o evento: Para cancelamentos até 30 dias antes da data do evento, será devolvido 60% do valor já pago. Para cancelamentos com prazo menor que 30 dias, será devolvido 40% do valor já pago. Caso o cliente queira ou precise cancelar ou mudar a data da reserva, a contratada descontará o valor pago na futura contratação do serviço se acontecer nos primeiros 30 dias corridos após o dia antecipadamente reservado.
+`;
+    } else {
+      clausula10 = `
+CANCELAMENTO
+
+Cláusula 10. O presente contrato poderá ser rescindido unilateralmente por qualquer uma das partes, desde que haja comunicação formal por escrito justificando o motivo. Nesta hipótese, não haverá devolução do valor já pago. O contratante poderá optar por reagendar o evento para outra data, desde que notifique a contratada com antecedência, ou efetuar o cancelamento sem devolução do valor pago, mantendo o crédito para agendamento futuro de novo evento.
 `;
     }
 
@@ -779,11 +785,12 @@ Júlio's Pizza House
                       </label>
                       <select
                         value={clausulaCancelamentoOpcao}
-                        onChange={e => setClausulaCancelamentoOpcao(e.target.value as 'padrao' | 'alternativa')}
+                        onChange={e => setClausulaCancelamentoOpcao(e.target.value as 'padrao' | 'alternativa' | 'semDevolucao')}
                         className="bg-gray-600 border-gray-500 text-white p-2 rounded"
                       >
                         <option value="padrao">Devolução de 100% até 10 dias antes (padrão)</option>
                         <option value="alternativa">Devolução de 60% até 30 dias antes, 40% para menos de 30 dias</option>
+                        <option value="semDevolucao">Sem devolução; reagendar ou cancelar sem reembolso</option>
                       </select>
                     </div>
 

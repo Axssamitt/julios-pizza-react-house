@@ -19,6 +19,11 @@ interface DashboardStats {
   avgViewsPerDay: number;
 }
 
+interface PageView {
+  date: string;
+  views: number;
+}
+
 export const useAnalyticsData = () => {
   const [analytics, setAnalytics] = useState<AnalyticsData[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -27,7 +32,7 @@ export const useAnalyticsData = () => {
     todayViews: 0,
     avgViewsPerDay: 0
   });
-  const [pageViews, setPageViews] = useState<any[]>([]);
+  const [pageViews, setPageViews] = useState<PageView[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -66,13 +71,14 @@ export const useAnalyticsData = () => {
         });
 
         // Preparar dados para o gráfico
-        const viewsByDate = data?.reduce((acc: any, item) => {
+        const dataArray = Array.isArray(data) ? data : [];
+        const viewsByDate = dataArray.reduce<Record<string, number>>((acc, item) => {
           const date = new Date(item.created_at).toLocaleDateString('pt-BR');
           acc[date] = (acc[date] || 0) + 1;
           return acc;
         }, {});
 
-        const chartData = Object.entries(viewsByDate || {})
+        const chartData = Object.entries(viewsByDate)
           .map(([date, views]) => ({ date, views }))
           .slice(-7); // Últimos 7 dias
 
