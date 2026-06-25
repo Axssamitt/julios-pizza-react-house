@@ -1,0 +1,10 @@
+[Thu Jun 25 15:39:41 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
+[Thu Jun 25 15:39:43 2026] [::1]:55212 Accepted
+[Thu Jun 25 15:39:43 2026] [::1]:55212 [200]: HEAD /index.php
+[Thu Jun 25 15:39:43 2026] [::1]:55212 Closing
+[Thu Jun 25 15:40:20 2026] [::1]:50798 Accepted
+[Thu Jun 25 15:40:20 2026] [::1]:50798 [200]: GET /index.php
+[Thu Jun 25 15:40:20 2026] [::1]:50798 Closing
+[Thu Jun 25 15:40:21 2026] [::1]:50812 Accepted
+[Thu Jun 25 15:40:21 2026] [::1]:50812 [200]: GET /cardapio.php
+[Thu Jun 25 15:40:21 2026] [::1]:50812 Closing

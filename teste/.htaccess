@@ -1,0 +1,17 @@
+# .htaccess for HostGator Compatibility in Subdirectory
+Options -Indexes
+
+# Prevent directory listing
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /teste/
+
+    # Direct access to includes/ should be forbidden
+    RewriteRule ^includes/.*$ - [F,L]
+
+    # Optional: Clean URLs if needed in the future
+</IfModule>
+
+# Handle PHP errors silently in production
+# php_flag display_errors Off
+# php_value error_reporting 0
