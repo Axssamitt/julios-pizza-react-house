@@ -19,7 +19,7 @@ interface DashboardStats {
   avgViewsPerDay: number;
 }
 
-interface PageView {
+interface PageViewChartItem {
   date: string;
   views: number;
 }
@@ -32,7 +32,7 @@ export const useAnalyticsData = () => {
     todayViews: 0,
     avgViewsPerDay: 0
   });
-  const [pageViews, setPageViews] = useState<PageView[]>([]);
+  const [pageViews, setPageViews] = useState<PageViewChartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -78,8 +78,8 @@ export const useAnalyticsData = () => {
           return acc;
         }, {});
 
-        const chartData = Object.entries(viewsByDate)
-          .map(([date, views]) => ({ date, views }))
+        const chartData: PageViewChartItem[] = Object.entries(viewsByDate)
+          .map(([date, views]) => ({ date, views: Number(views) }))
           .slice(-7); // Últimos 7 dias
 
         setPageViews(chartData);

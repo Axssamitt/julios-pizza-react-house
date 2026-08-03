@@ -3,12 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Pizza, Settings, FileText, Users, BarChart3, Home, Image, Instagram, Shield } from 'lucide-react';
+import { LogOut, Pizza, Settings, FileText, Users, Home, Image, Instagram, Shield } from 'lucide-react';
 import { PizzaManager } from '@/components/admin/PizzaManager';
 import { ConfigManager } from '@/components/admin/ConfigManager';
 import { FormularioManager } from '@/components/admin/FormularioManager';
 import { ContratoManager } from '@/components/admin/ContratoManager';
-import { Dashboard } from '@/components/admin/Dashboard';
 import { HomeConfigManager } from '@/components/admin/HomeConfigManager';
 import { CarouselManager } from '@/components/admin/CarouselManager';
 import { UserManager } from '@/components/admin/UserManager';
@@ -22,7 +21,6 @@ interface AdminUser {
 }
 
 const allTabs = [
-  { value: "dashboard", label: "Dashboard", IconComponent: BarChart3 },
   { value: "home", label: "Home", IconComponent: Home },
   { value: "carousel", label: "Carrossel", IconComponent: Image },
   { value: "pizzas", label: "Pizzas", IconComponent: Pizza },
@@ -80,8 +78,8 @@ const Admin = () => {
     : allTabs;
 
   const defaultTabValue = userTipo === 'restrito'
-    ? (filteredTabs.length > 0 ? filteredTabs[0].value : '') // Default to first available tab for restrito
-    : 'dashboard';
+    ? (filteredTabs.length > 0 ? filteredTabs[0].value : '')
+    : 'home';
 
 
   return (
@@ -130,9 +128,6 @@ const Admin = () => {
 </TabsList>
           <div className={userTipo === 'restrito'?'pt-4 md:pt-0':'pt-28 md:pt-0'}> 
             {/* conteudo das tabs */}
-      <TabsContent value="dashboard">
-        <Dashboard />
-      </TabsContent>
       <TabsContent value="home">
         <HomeConfigManager />
       </TabsContent>
