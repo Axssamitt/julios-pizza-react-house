@@ -70,12 +70,10 @@ export const ContratoManager = () => {
       fetchItensAdicionais(selectedFormulario.id);
       fetchParcelas(selectedFormulario.id);
       const valorTotalCalculado = calcularValorTotal(selectedFormulario.quantidade_adultos, selectedFormulario.quantidade_criancas, itensAdicionais);
-      const entradaCalculada = calcularEntrada(valorTotalCalculado);
-
-      if (selectedFormulario.valor_entrada && selectedFormulario.valor_entrada > 0) {
+      if (selectedFormulario.valor_entrada !== null && selectedFormulario.valor_entrada !== undefined) {
         setValorEntradaEditavel(selectedFormulario.valor_entrada.toFixed(2));
       } else {
-        setValorEntradaEditavel(entradaCalculada.toFixed(2));
+        setValorEntradaEditavel('0.00');
       }
     } else {
       setValorEntradaEditavel('');
@@ -152,7 +150,8 @@ export const ContratoManager = () => {
     if (!selectedFormulario || !primeiraParcela || numeroParcelas < 1) return;
 
     const valorTotal = calcularValorTotal(selectedFormulario.quantidade_adultos, selectedFormulario.quantidade_criancas, itensAdicionais);
-    const entrada = parseFloat(String(valorEntradaEditavel)) || calcularEntrada(valorTotal);
+    const entradaInformada = parseFloat(String(valorEntradaEditavel));
+    const entrada = Number.isNaN(entradaInformada) ? 0 : entradaInformada;
     const saldoRestante = valorTotal - entrada;
     const valorParcela = saldoRestante / numeroParcelas;
 
@@ -201,7 +200,7 @@ export const ContratoManager = () => {
   };
 
   const handleSalvarValorEntrada = async () => {
-    if (!selectedFormulario || valorEntradaEditavel === '') {
+    if (!selectedFormulario || String(valorEntradaEditavel).trim() === '') {
       console.error("Formulário não selecionado ou valor de entrada vazio.");
       return;
     }
@@ -303,10 +302,10 @@ export const ContratoManager = () => {
     const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itensAdicionais);
 
     let entrada: number;
-    if (formulario.valor_entrada && formulario.valor_entrada > 0) {
+    if (formulario.valor_entrada !== null && formulario.valor_entrada !== undefined) {
       entrada = formulario.valor_entrada;
     } else {
-      entrada = calcularEntrada(valorTotal); 
+      entrada = 0;
     }
 
     const restante = valorTotal - entrada;
@@ -424,10 +423,10 @@ CPF: 034.988.389-03
     const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itensAdicionais);
     
     let entradaRecibo: number;
-    if (formulario.valor_entrada && formulario.valor_entrada > 0) {
+    if (formulario.valor_entrada !== null && formulario.valor_entrada !== undefined) {
       entradaRecibo = formulario.valor_entrada;
     } else {
-      entradaRecibo = calcularEntrada(valorTotal);
+      entradaRecibo = 0;
     }
     
     const percentualEntradaReal = calcularPercentualEntrada(entradaRecibo, valorTotal);

@@ -122,14 +122,14 @@ export const FormularioManager = () => {
     return timeStr.substring(0, 5);
   };
 
-  // Filtro aprimorado por nome (parcial) e CPF (completo)
+  // Filtro por nome ou documento (completo)
   const formulariosFiltrados = formularios
     .filter((formulario) => {
       const termo = searchTerm.trim().toLowerCase();
       if (!termo) return true;
 
-      // Junta nome e CPF (sem formatação) em uma única string
-      const nomeCpf = (
+      // Junta nome e documento (sem formatação) em uma única string
+      const nomeDocumento = (
         formulario.nome_completo +
         ' ' +
         formulario.cpf.replace(/\D/g, '')
@@ -139,7 +139,7 @@ export const FormularioManager = () => {
       const termoLimpo = termo.replace(/\D/g, '');
       const termoBusca = termoLimpo.length >= 3 ? termoLimpo : termo;
 
-      return nomeCpf.includes(termoBusca);
+      return nomeDocumento.includes(termoBusca);
     })
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); // <-- garante ordem
 
@@ -166,7 +166,7 @@ export const FormularioManager = () => {
           <NovoFormularioModal onFormularioAdicionado={fetchFormularios} />
           <input
             type="text"
-            placeholder="Filtrar por nome (parcial) ou CPF (completo)"
+            placeholder="Filtrar por nome ou CPF/CNPJ"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-white text-sm"
@@ -198,7 +198,7 @@ export const FormularioManager = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="text-lg font-semibold text-white">{formulario.nome_completo}</h3>
-                      <p className="text-gray-400 text-sm">CPF: {formulario.cpf}</p>
+                      <p className="text-gray-400 text-sm">CPF/CNPJ: {formulario.cpf}</p>
                     </div>
                     <Badge className={getStatusColor(formulario.status)}>
                       {formulario.status}
@@ -301,7 +301,7 @@ export const FormularioManager = () => {
                           />
                         </div>
                         <div>
-                          <label className="text-gray-400 text-sm">CPF</label>
+                          <label className="text-gray-400 text-sm">CPF/CNPJ</label>
                           <input
                             className="w-full bg-gray-700 text-white rounded px-2 py-1"
                             value={editData.cpf}
@@ -403,7 +403,7 @@ export const FormularioManager = () => {
                           <p className="text-white">{selectedFormulario.nome_completo}</p>
                         </div>
                         <div>
-                          <label className="text-gray-400 text-sm">CPF</label>
+                          <label className="text-gray-400 text-sm">CPF/CNPJ</label>
                           <p className="text-white">{selectedFormulario.cpf}</p>
                         </div>
                         <div>

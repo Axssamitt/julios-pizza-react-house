@@ -78,8 +78,13 @@ export const ContactForm = () => {
     }
   };
 
-  const formatCPF = (value: string) => {
-    const numbers = value.replace(/\D/g, '');
+  const formatDocument = (value: string) => {
+    const numbers = value.replace(/\D/g, '').slice(0, 14);
+
+    if (numbers.length > 11) {
+      return numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+
     return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   };
 
@@ -128,15 +133,15 @@ export const ContactForm = () => {
                 </div>
                 <div>
                   <label className="flex items-center text-sm font-medium text-gray-300 mb-2">
-                    CPF *
+                    CPF ou CNPJ *
                   </label>
                   <Input
                     type="text"
                     required
-                    maxLength={14}
+                    maxLength={18}
                     value={formData.cpf}
-                    onChange={(e) => setFormData({...formData, cpf: formatCPF(e.target.value)})}
-                    placeholder="000.000.000-00"
+                    onChange={(e) => setFormData({...formData, cpf: formatDocument(e.target.value)})}
+                    placeholder="CPF ou CNPJ"
                     className="w-full bg-gray-700 border-gray-600 text-white focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>

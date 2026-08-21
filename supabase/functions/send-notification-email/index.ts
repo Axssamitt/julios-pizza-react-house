@@ -1,8 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
-// Utilizando a chave fornecida diretamente
-const resend = new Resend("re_eEknzuuQ_8BvHehKoxNRN5AtWy3cusn3z");
+const resendApiKey = Deno.env.get("RESEND_API_KEY");
+if (!resendApiKey) {
+  throw new Error("RESEND_API_KEY não configurada");
+}
+const resend = new Resend(resendApiKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,7 +38,7 @@ const handler = async (req)=>{
     const whatsappMessage = encodeURIComponent(
       `🍕 *NOVO ORÇAMENTO - Julio's Pizza House*\n\n` +
       `👤 *Cliente:* ${formData.nome_completo}\n` +
-      `📄 *CPF:* ${formData.cpf}\n` +
+      `📄 *CPF/CNPJ:* ${formData.cpf}\n` +
       `📞 *Telefone:* ${formData.telefone}\n\n` +
       `📅 *Data do Evento:* ${new Date(formData.data_evento).toLocaleDateString('pt-BR')}\n` +
       `⏰ *Horário:* ${formData.horario}\n` +
@@ -61,7 +64,7 @@ const handler = async (req)=>{
           <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h2 style="color: #333; margin-top: 0;">Dados do Cliente</h2>
             <p><strong>Nome:</strong> ${formData.nome_completo}</p>
-            <p><strong>CPF:</strong> ${formData.cpf}</p>
+            <p><strong>CPF/CNPJ:</strong> ${formData.cpf}</p>
             <p><strong>Telefone:</strong> ${formData.telefone}</p>
           </div>
 

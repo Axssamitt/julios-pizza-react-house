@@ -128,8 +128,8 @@ include 'includes/header.php';
                         <input type="text" name="nome_completo" required class="w-full bg-gray-700 border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-orange-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-2">CPF *</label>
-                        <input type="text" name="cpf" required placeholder="000.000.000-00" class="w-full bg-gray-700 border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-orange-500 outline-none">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">CPF ou CNPJ *</label>
+                        <input type="text" name="cpf" required maxlength="18" placeholder="CPF ou CNPJ" class="w-full bg-gray-700 border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-orange-500 outline-none">
                     </div>
                 </div>
                 <div class="space-y-4">
@@ -177,6 +177,14 @@ include 'includes/header.php';
 </section>
 
 <script>
+    const documentInput = document.querySelector('input[name="cpf"]');
+    documentInput.addEventListener('input', (event) => {
+        const numbers = event.target.value.replace(/\D/g, '').slice(0, 14);
+        event.target.value = numbers.length > 11
+            ? numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+            : numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    });
+
     // Simple carousel script
     let currentSlide = 0;
     const slides = document.querySelectorAll('.carousel-item');
