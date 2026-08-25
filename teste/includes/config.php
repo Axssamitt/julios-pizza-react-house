@@ -3,10 +3,10 @@
 // IMPORTANT: Replace the placeholders below with your actual database credentials.
 
 return [
-    'host' => 'localhost',
-    'db'   => 'YOUR_DATABASE_NAME',
-    'user' => 'YOUR_DATABASE_USER',
-    'pass' => 'YOUR_DATABASE_PASSWORD',
-    'secret_key' => 'REPLACE_WITH_A_SECURE_RANDOM_STRING'
+    'host' => '201.94.228.49',
+    'db'   => 'julios92_basedados',
+    'user' => 'julios92_juliano',
+    'pass' => '@Calabresa2024',
+    'secret_key' => 'julios_buffet_secret_key_2024'
 ];
 ?>
