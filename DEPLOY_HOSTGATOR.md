@@ -6,7 +6,7 @@ adaptador em `src/integrations/api/client.ts`, que chama a API PHP em `./api`.
 ## 1. Banco de dados (cPanel → MySQL Databases)
 
 - Banco: `julios92_basedados`
-- Usuário: `julios92_admin` (senha `@Calabresa2024`), com ALL PRIVILEGES no banco
+- Usuário: `julios92_admin` (senha `xxx`), com ALL PRIVILEGES no banco
 - Host: `localhost` (já configurado em `public/api/config.php`)
 
 No phpMyAdmin, selecione o banco e importe o arquivo `database_migration.sql`
