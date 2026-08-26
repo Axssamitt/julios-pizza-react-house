@@ -1,14 +1,19 @@
 <?php
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+$config = require_once __DIR__ . '/config.php';
+
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowed = $config['allowed_origins'] ?? [];
+if ($origin && in_array($origin, $allowed, true)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+    header('Vary: Origin');
+}
+header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit;
 }
-
-$config = require_once 'config.php';
 
 $dsn = "mysql:host={$config['host']};dbname={$config['db']};charset=utf8mb4";
 $options = [
