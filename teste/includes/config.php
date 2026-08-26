@@ -3,9 +3,9 @@
 // IMPORTANT: Replace the placeholders below with your actual database credentials.
 
 return [
-    'host' => '201.94.228.49',
+    'host' => 'localhost',
     'db'   => 'julios92_basedados',
-    'user' => 'julios92_juliano',
+    'user' => 'julios92_admin',
     'pass' => '@Calabresa2024',
     'secret_key' => 'julios_buffet_secret_key_2024'
 ];
