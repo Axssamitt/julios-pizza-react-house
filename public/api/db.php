@@ -57,8 +57,9 @@ function generateToken($user_id) {
 
 function verifyToken() {
     global $config;
-    $headers = apache_request_headers();
-    $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+    $headers = function_exists('apache_request_headers') ? apache_request_headers() : (function_exists('getallheaders') ? getallheaders() : []);
+    $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? ($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '');
+
 
     if (strpos($authHeader, 'Bearer ') === 0) {
         $token = substr($authHeader, 7);
