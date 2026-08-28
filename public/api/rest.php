@@ -73,8 +73,17 @@ switch ($method) {
 
     case 'POST':
         $data = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($data)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid JSON payload']);
+            exit;
+        }
         if (!isset($data['id'])) {
             $data['id'] = generateUUID();
+        }
+
+        if ($table === 'usuarios' && isset($data['senha'])) {
+            $data['senha'] = password_hash($data['senha'], PASSWORD_DEFAULT);
         }
 
         $keys = array_keys($data);
@@ -102,6 +111,12 @@ switch ($method) {
         $id = $_GET['id'] ?? null;
         $data = json_decode(file_get_contents('php://input'), true);
 
+        if (!is_array($data)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Invalid JSON payload']);
+            exit;
+        }
+
         if (!$id && isset($data['id'])) {
             $id = $data['id'];
             unset($data['id']);
@@ -110,6 +125,10 @@ switch ($method) {
         if (!$id) {
             echo json_encode(['error' => 'ID not specified']);
             exit;
+        }
+
+        if ($table === 'usuarios' && isset($data['senha']) && $data['senha'] !== '') {
+            $data['senha'] = password_hash($data['senha'], PASSWORD_DEFAULT);
         }
 
         $fields = [];
