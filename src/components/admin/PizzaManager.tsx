@@ -57,19 +57,19 @@ export const PizzaManager = () => {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `pizzas/${fileName}`;
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const bucket = 'pizzas';
 
       const { error: uploadError } = await supabase.storage
-        .from('pizza-images')
-        .upload(filePath, file);
+        .from(bucket)
+        .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage
-        .from('pizza-images')
-        .getPublicUrl(filePath);
+        .from(bucket)
+        .getPublicUrl(fileName);
 
       if (isNewPizza) {
         setNewPizza(prev => ({ ...prev, imagem_url: data.publicUrl }));

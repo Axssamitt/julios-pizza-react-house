@@ -58,21 +58,21 @@ export const CarouselManager = () => {
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `carousel/${fileName}`;
+    const fileExt = file.name.split('.').pop() || 'jpg';
+    const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+    const bucket = 'carousel';
 
     const { error: uploadError } = await supabase.storage
-      .from('images')
-      .upload(filePath, file);
+      .from(bucket)
+      .upload(fileName, file);
 
     if (uploadError) {
       throw uploadError;
     }
 
     const { data } = supabase.storage
-      .from('images')
-      .getPublicUrl(filePath);
+      .from(bucket)
+      .getPublicUrl(fileName);
 
     return data.publicUrl;
   };

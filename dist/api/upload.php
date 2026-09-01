@@ -42,7 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'];
         $url = "$protocol://$host/uploads/$bucket/$fileName";
-        echo json_encode(['url' => $url, 'path' => "$bucket/$fileName"]);
+        echo json_encode([
+            'url' => $url,
+            'publicUrl' => $url,
+            'path' => "$bucket/$fileName"
+        ]);
     } else {
         http_response_code(500);
         echo json_encode(['error' => 'Failed to move uploaded file']);

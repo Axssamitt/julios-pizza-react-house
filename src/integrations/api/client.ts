@@ -237,7 +237,12 @@ class SupabaseEmulator {
         }
       },
       getPublicUrl: (path: string) => {
-        return { data: { publicUrl: `./uploads/${path}` } };
+        const normalizedPath = String(path || '').replace(/^\/+/, '');
+        const publicUrl = typeof window !== 'undefined' && window.location?.origin
+          ? new URL(`/uploads/${normalizedPath}`, window.location.origin).toString()
+          : `/uploads/${normalizedPath}`;
+
+        return { data: { publicUrl } };
       }
     })
   };
