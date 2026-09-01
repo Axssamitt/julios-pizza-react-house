@@ -62,12 +62,20 @@ export const UserManager = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const nome = formData.nome.trim();
+      const email = formData.email.trim();
+      const senha = formData.senha.trim();
+
+      if (!nome || !email || !senha) {
+        throw new Error('Nome, email e senha são obrigatórios.');
+      }
+
       const { error } = await supabase
         .from('usuarios')
         .insert({
-          nome: formData.nome,
-          email: formData.email,
-          senha: formData.senha,
+          nome,
+          email,
+          senha,
           ativo: true
         });
 
@@ -103,13 +111,21 @@ export const UserManager = () => {
 
   const handleUpdate = async (id: string) => {
     try {
+      const nome = editData.nome.trim();
+      const email = editData.email.trim();
+      const senha = editData.senha.trim();
+
+      if (!nome || !email) {
+        throw new Error('Nome e email são obrigatórios.');
+      }
+
       const updateData: { nome: string; email: string; senha?: string } = {
-        nome: editData.nome,
-        email: editData.email
+        nome,
+        email
       };
 
-      if (editData.senha) {
-        updateData.senha = editData.senha;
+      if (senha) {
+        updateData.senha = senha;
       }
 
       const { error } = await supabase

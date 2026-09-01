@@ -235,11 +235,11 @@ export const ContratoManager = () => {
     const { data, error } = await supabase
       .from('formularios_contato')
       .select('*')
-      .eq('status', 'confirmado')
       .order('data_evento', { ascending: true });
 
     if (!error && data) {
-      setFormularios(data);
+      const confirmados = data.filter((formulario) => String(formulario.status || '').toLowerCase() === 'confirmado');
+      setFormularios(confirmados);
     }
   };
 

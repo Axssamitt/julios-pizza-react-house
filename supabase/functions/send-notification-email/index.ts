@@ -2,10 +2,7 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
 const resendApiKey = Deno.env.get("RESEND_API_KEY");
-if (!resendApiKey) {
-  throw new Error("RESEND_API_KEY não configurada");
-}
-const resend = new Resend(resendApiKey);
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +16,22 @@ const handler = async (req)=>{
   }
   try {
     const formData = await req.json();
+
+    if (!resend) {
+      console.warn("RESEND_API_KEY não configurada. Ignorando envio de email");
+      return new Response(JSON.stringify({
+        success: true,
+        skipped: true,
+        message: "RESEND_API_KEY não configurada"
+      }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      });
+    }
+
     // Formatar telefone para formato internacional (WhatsApp)
     function getWhatsAppNumber(phone: string): string {
       const numbersOnly = phone.replace(/\D/g, "");

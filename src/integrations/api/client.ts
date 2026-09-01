@@ -6,6 +6,8 @@ class SupabaseEmulator {
   private filters: { key: string, value: any }[] = [];
   private orderField: string = '';
   private limitCount: number | null = null;
+  private singleMode: boolean = false;
+  private maybeSingleMode: boolean = false;
 
   private getHeaders() {
     const sessionStr = localStorage.getItem('sb-session');
@@ -48,6 +50,18 @@ class SupabaseEmulator {
     return this;
   }
 
+  single() {
+    this.singleMode = true;
+    this.maybeSingleMode = false;
+    return this;
+  }
+
+  maybeSingle() {
+    this.singleMode = false;
+    this.maybeSingleMode = true;
+    return this;
+  }
+
   async then(resolve: any, reject: any) {
     try {
       const queryParams = new URLSearchParams();
@@ -62,7 +76,17 @@ class SupabaseEmulator {
       const data = await response.json();
 
       if (response.ok) {
-        resolve({ data, error: null });
+        let normalizedData = data;
+
+        if (Array.isArray(normalizedData)) {
+          if (this.singleMode) {
+            normalizedData = normalizedData[0] ?? null;
+          } else if (this.maybeSingleMode) {
+            normalizedData = normalizedData.length > 0 ? normalizedData[0] : null;
+          }
+        }
+
+        resolve({ data: normalizedData, error: null });
       } else {
         resolve({ data: null, error: data.error || 'Unknown error' });
       }
@@ -151,6 +175,44 @@ class SupabaseEmulator {
     },
     onAuthStateChange: (callback: any) => {
       return { data: { subscription: { unsubscribe: () => {} } } };
+    }
+  };
+
+  functions = {
+    invoke: async (functionName: string, options?: { body?: any; headers?: Record<string, string> }) => {
+      const baseUrl = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+
+      if (!baseUrl || !anonKey) {
+        return {
+          data: { success: true, skipped: true, message: 'Supabase function disabled in local mode' },
+          error: null
+        };
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${anonKey}`,
+            ...(options?.headers || {})
+          },
+          body: JSON.stringify(options?.body ?? {})
+        });
+
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : {};
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Supabase function failed');
+        }
+
+        return { data, error: null };
+      } catch (err) {
+        console.error(`Erro ao invocar função ${functionName}:`, err);
+        return { data: null, error: err };
+      }
     }
   };
 
