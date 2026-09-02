@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 
 interface AnalyticsData {
   id: string;
@@ -42,7 +42,7 @@ export const useAnalyticsData = () => {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const { data, error } = await supabase
+        const { data, error } = await db
           .from('page_analytics')
           .select('*')
           .gte('created_at', thirtyDaysAgo.toISOString())

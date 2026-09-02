@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Instagram, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 
 interface InstagramPost {
   id: string;
@@ -26,7 +26,7 @@ export const InstagramFeed = () => {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('instagram_posts')
         .select('*')
         .eq('ativo', true)

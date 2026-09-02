@@ -2,13 +2,13 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 
 const Navbar = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await db.auth.signOut();
     localStorage.removeItem('userType');
     navigate('/auth');
   };

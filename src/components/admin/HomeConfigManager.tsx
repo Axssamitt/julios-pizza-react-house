@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface HomeConfig {
@@ -67,7 +67,7 @@ Faça o seu rodízio de pizzas sem sair do conforto de sua casa com Julio House 
 
   const fetchConfig = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('home_config')
         .select('*')
         .maybeSingle();
@@ -117,7 +117,7 @@ Faça o seu rodízio de pizzas sem sair do conforto de sua casa com Julio House 
     try {
       if (config) {
         // Atualizar configuração existente
-        const { error } = await supabase
+        const { error } = await db
           .from('home_config')
           .update({
             ...formData,
@@ -128,11 +128,9 @@ Faça o seu rodízio de pizzas sem sair do conforto de sua casa com Julio House 
         if (error) throw error;
       } else {
         // Criar nova configuração
-        const { data, error } = await supabase
+        const { data, error } = await db
           .from('home_config')
-          .insert(formData)
-          .select()
-          .single();
+          .insert([formData]);
 
         if (error) throw error;
         setConfig(data);

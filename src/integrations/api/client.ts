@@ -1,9 +1,8 @@
-
 const API_URL = './api';
 
-class SupabaseEmulator {
+class HostgatorDbClient {
   private table: string = '';
-  private filters: { key: string, value: any }[] = [];
+  private filters: { key: string; value: any }[] = [];
   private orderField: string = '';
   private limitCount: number | null = null;
   private singleMode: boolean = false;
@@ -15,9 +14,13 @@ class SupabaseEmulator {
       'Content-Type': 'application/json'
     };
     if (sessionStr) {
-      const session = JSON.parse(sessionStr);
-      if (session.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
+      try {
+        const session = JSON.parse(sessionStr);
+        if (session.access_token) {
+          headers['Authorization'] = `Bearer ${session.access_token}`;
+        }
+      } catch (e) {
+        console.error('Error parsing session token:', e);
       }
     }
     return headers;
@@ -28,6 +31,8 @@ class SupabaseEmulator {
     this.filters = [];
     this.orderField = '';
     this.limitCount = null;
+    this.singleMode = false;
+    this.maybeSingleMode = false;
     return this;
   }
 
@@ -180,39 +185,10 @@ class SupabaseEmulator {
 
   functions = {
     invoke: async (functionName: string, options?: { body?: any; headers?: Record<string, string> }) => {
-      const baseUrl = (import.meta.env.VITE_SUPABASE_URL || '').replace(/\/$/, '');
-      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
-
-      if (!baseUrl || !anonKey) {
-        return {
-          data: { success: true, skipped: true, message: 'Supabase function disabled in local mode' },
-          error: null
-        };
-      }
-
-      try {
-        const response = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${anonKey}`,
-            ...(options?.headers || {})
-          },
-          body: JSON.stringify(options?.body ?? {})
-        });
-
-        const text = await response.text();
-        const data = text ? JSON.parse(text) : {};
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Supabase function failed');
-        }
-
-        return { data, error: null };
-      } catch (err) {
-        console.error(`Erro ao invocar função ${functionName}:`, err);
-        return { data: null, error: err };
-      }
+      return {
+        data: { success: true, skipped: true, message: 'Cloud function disabled' },
+        error: null
+      };
     }
   };
 
@@ -224,7 +200,7 @@ class SupabaseEmulator {
           formData.append('file', file);
           formData.append('bucket', bucket);
           const headers = this.getHeaders();
-          delete headers['Content-Type']; // Let the browser set it for FormData
+          delete headers['Content-Type']; // Let browser set boundary
           const response = await fetch(`${API_URL}/upload.php`, {
             method: 'POST',
             headers: headers,
@@ -248,4 +224,5 @@ class SupabaseEmulator {
   };
 }
 
-export const supabase = new SupabaseEmulator() as any;
+export const db = new HostgatorDbClient() as any;
+export const supabase = db;

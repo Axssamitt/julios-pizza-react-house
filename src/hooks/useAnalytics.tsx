@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 
 export const useAnalytics = (pagePath: string) => {
   useEffect(() => {
@@ -9,7 +9,7 @@ export const useAnalytics = (pagePath: string) => {
         // Gerar um session ID simples baseado no timestamp e random
         const sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         
-        await supabase.from('page_analytics').insert({
+        await db.from('page_analytics').insert({
           pagina: pagePath,
           user_agent: navigator.userAgent,
           referrer: document.referrer || null,

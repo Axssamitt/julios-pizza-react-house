@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 import { Plus, Edit, Trash2, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -33,7 +33,7 @@ export const ConfigManager = () => {
 
   const fetchConfigs = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('configuracoes')
         .select('*')
         .order('chave', { ascending: true });
@@ -63,7 +63,7 @@ export const ConfigManager = () => {
     }
 
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('configuracoes')
         .insert([{
           chave: newConfig.chave,
@@ -92,7 +92,7 @@ export const ConfigManager = () => {
 
   const handleUpdate = async (id: string, updates: Partial<Config>) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('configuracoes')
         .update(updates)
         .eq('id', id);
@@ -119,7 +119,7 @@ export const ConfigManager = () => {
     if (!confirm('Tem certeza que deseja excluir esta configuração?')) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('configuracoes')
         .delete()
         .eq('id', id);

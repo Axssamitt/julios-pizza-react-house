@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 
 interface Pizza {
   id: string;
@@ -24,7 +24,7 @@ export const PizzaGallery = () => {
 
   const fetchPizzas = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('pizzas')
         .select('*')
         .eq('ativo', true)

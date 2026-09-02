@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CalendarDays, Clock, Users, MapPin, Phone, User, Plus } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface NovoFormularioModalProps {
@@ -35,7 +35,7 @@ export const NovoFormularioModal = ({ onFormularioAdicionado }: NovoFormularioMo
     setLoading(true);
 
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('formularios_contato')
         .insert([formData]);
 
