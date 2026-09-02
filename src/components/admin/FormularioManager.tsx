@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 import { Eye, Trash2, Calendar, Clock, Users, Phone, MapPin } from 'lucide-react';
 import { CalendarWithHighlight } from './CalendarWithHighlight';
 import { NovoFormularioModal } from './NovoFormularioModal';
@@ -40,7 +40,7 @@ export const FormularioManager = () => {
   }, []);
 
   const fetchFormularios = async () => {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('formularios_contato')
       .select('*')
       .order('created_at', { ascending: false });
@@ -51,7 +51,7 @@ export const FormularioManager = () => {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase
+    const { error } = await db
       .from('formularios_contato')
       .update({ status })
       .eq('id', id);
@@ -62,7 +62,7 @@ export const FormularioManager = () => {
   };
 
   const deleteFormulario = async (id: string) => {
-    const { error } = await supabase
+    const { error } = await db
       .from('formularios_contato')
       .delete()
       .eq('id', id);
@@ -76,7 +76,7 @@ export const FormularioManager = () => {
   const salvarEdicao = async () => {
     if (!editData) return;
     const { id, ...dadosParaAtualizar } = editData;
-    const { error } = await supabase
+    const { error } = await db
       .from('formularios_contato')
       .update(dadosParaAtualizar)
       .eq('id', id);

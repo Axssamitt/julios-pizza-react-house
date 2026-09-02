@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 import { Plus, Edit, Trash2, Instagram, ExternalLink, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,7 +40,7 @@ export const InstagramManager = () => {
 
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('instagram_posts')
         .select('*')
         .order('ordem');
@@ -64,7 +64,7 @@ export const InstagramManager = () => {
     const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
     const bucket = 'instagram';
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await db.storage
       .from(bucket)
       .upload(fileName, file);
 
@@ -72,7 +72,7 @@ export const InstagramManager = () => {
       throw uploadError;
     }
 
-    const { data } = supabase.storage
+    const { data } = db.storage
       .from(bucket)
       .getPublicUrl(fileName);
 
@@ -109,7 +109,7 @@ export const InstagramManager = () => {
       const nextOrder = Math.max(...posts.map(post => post.ordem), 0) + 1;
       
       if (editingPost) {
-        const { error } = await supabase
+        const { error } = await db
           .from('instagram_posts')
           .update({
             titulo: formData.titulo,
@@ -125,7 +125,7 @@ export const InstagramManager = () => {
           description: "Post atualizado com sucesso!",
         });
       } else {
-        const { error } = await supabase
+        const { error } = await db
           .from('instagram_posts')
           .insert({
             titulo: formData.titulo,
@@ -160,7 +160,7 @@ export const InstagramManager = () => {
     if (!confirm('Tem certeza que deseja excluir este post?')) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('instagram_posts')
         .delete()
         .eq('id', id);
@@ -183,7 +183,7 @@ export const InstagramManager = () => {
 
   const handleToggleActive = async (id: string, ativo: boolean) => {
     try {
-      const { error } = await supabase
+      const { error } = await db
         .from('instagram_posts')
         .update({ ativo: !ativo })
         .eq('id', id);

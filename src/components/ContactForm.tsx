@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { CalendarDays, Clock, Users, MapPin, Phone, User } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 import { useToast } from '@/hooks/use-toast';
 
 export const ContactForm = () => {
@@ -30,22 +30,11 @@ export const ContactForm = () => {
 
     try {
       // Inserir formulário no banco
-      const { data: formulario, error } = await supabase
+      const { data: formulario, error } = await db
         .from('formularios_contato')
-        .insert([formData])
-        .select()
-        .single();
+        .insert(formData);
 
       if (error) throw error;
-
-      // Tentar enviar email de notificação (não falha se der erro)
-      try {
-        await supabase.functions.invoke('send-notification-email', {
-          body: formData
-        });
-      } catch (emailError) {
-        console.log('Email não enviado:', emailError);
-      }
 
       toast({
         title: "Orçamento enviado com sucesso!",

@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/api/client';
 import heic2any from "heic2any";
 
 // Função para converter qualquer imagem para JPG
@@ -42,7 +42,7 @@ async function convertToJpg(file: File): Promise<File> {
 export const initializeStorage = async () => {
   try {
     // Verificar se o bucket 'images' existe
-    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+    const { data: buckets, error: listError } = await db.storage.listBuckets();
     
     if (listError) {
       console.error('Erro ao listar buckets:', listError);
@@ -53,7 +53,7 @@ export const initializeStorage = async () => {
     
     if (!imagesBucket) {
       // Criar bucket 'images' se não existir
-      const { data, error } = await supabase.storage.createBucket('images', {
+      const { data, error } = await db.storage.createBucket('images', {
         public: true,
         allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
         fileSizeLimit: 5242880 // 5MB
@@ -80,7 +80,7 @@ export const uploadImage = async (file: File, folder: string): Promise<string> =
   const fileName = `${Date.now()}_${Math.random().toString(36).substring(2)}.jpg`;
   const filePath = `${folder}/${fileName}`;
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await db.storage
     .from('images')
     .upload(filePath, jpgFile);
 
@@ -88,7 +88,7 @@ export const uploadImage = async (file: File, folder: string): Promise<string> =
     throw uploadError;
   }
 
-  const { data } = supabase.storage
+  const { data } = db.storage
     .from('images')
     .getPublicUrl(filePath);
 
