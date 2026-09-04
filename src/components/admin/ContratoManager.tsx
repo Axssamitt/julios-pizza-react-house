@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { FileText, Download, Plus, Trash2, Calendar, Calculator } from 'lucide-react';
 import { numberToWordsBrazilian } from '@/utils/supabaseStorage';
 import { jsPDF } from 'jspdf';
+import { CalendarWithHighlight } from './CalendarWithHighlight';
 
 interface Formulario {
   id: string;
@@ -48,6 +49,8 @@ interface Config {
 export const ContratoManager = () => {
   const [formularios, setFormularios] = useState<Formulario[]>([]);
   const [selectedFormulario, setSelectedFormulario] = useState<Formulario | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchDate, setSearchDate] = useState('');
   const [contratoGerado, setContratoGerado] = useState<string>('');
   const [reciboGerado, setReciboGerado] = useState<string>('');
   const [configs, setConfigs] = useState<Record<string, string>>({});
@@ -283,6 +286,20 @@ export const ContratoManager = () => {
   const formatTime = (timeStr: string) => {
     return timeStr.substring(0, 5);
   };
+
+  const formulariosFiltrados = formularios.filter((formulario) => {
+    const termo = searchTerm.trim().toLowerCase();
+    const termoLimpo = termo.replace(/\D/g, '');
+    const termoBusca = termoLimpo.length >= 3 ? termoLimpo : termo;
+    const nomeDocumento = `${formulario.nome_completo} ${formulario.cpf.replace(/\D/g, '')}`.toLowerCase();
+
+    const correspondeNomeDocumento = !termoBusca || nomeDocumento.includes(termoBusca);
+    const correspondeData = !searchDate || formulario.data_evento === searchDate;
+
+    return correspondeNomeDocumento && correspondeData;
+  });
+
+  const datasComRegistros = [...new Set(formularios.map((formulario) => formulario.data_evento))];
 
   const calcularValorTotal = (adultos: number, criancas: number, itensAdicionais: ItemAdicional[] = []) => {
     const valorAdulto = parseFloat(configs.valor_adulto || '55.00');
@@ -539,12 +556,29 @@ Júlio's Pizza House
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-white">Geração de Contratos e Recibos</h2>
+        <div className="flex flex-col md:flex-row gap-2 md:items-center">
+          <input
+            type="text"
+            placeholder="Filtrar por nome ou CPF/CNPJ"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="bg-gray-700 border border-gray-600 rounded px-3 py-1 text-white text-sm"
+          />
+          <CalendarWithHighlight
+            value={searchDate}
+            onChange={setSearchDate}
+            highlightDates={datasComRegistros}
+          />
+          <div className="text-sm text-gray-400 md:ml-2">
+            Total: {formulariosFiltrados.length} eventos
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-orange-400">Eventos Confirmados</h3>
-          {formularios.map((formulario) => (
+          {formulariosFiltrados.map((formulario) => (
             <div key={formulario.id} className="space-y-4">
               <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700 hover:border-orange-500/50 transition-colors">
                 <CardContent className="p-4">
