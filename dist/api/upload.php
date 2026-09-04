@@ -35,7 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $fileName = time() . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+    $requestedPath = basename((string) ($_POST['path'] ?? ''));
+    $fileName = $requestedPath !== '' ? $requestedPath : time() . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
+    $fileNameExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    if ($fileNameExtension !== $extension) {
+        $fileName = pathinfo($fileName, PATHINFO_FILENAME) . '.' . $extension;
+    }
     $targetFile = $targetDir . $fileName;
 
     if (move_uploaded_file($file['tmp_name'], $targetFile)) {

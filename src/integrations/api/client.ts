@@ -247,6 +247,7 @@ class SupabaseEmulator {
           const formData = new FormData();
           formData.append('file', file);
           formData.append('bucket', bucket);
+          formData.append('path', path);
           const headers = this.getHeaders();
           delete headers['Content-Type']; // Let the browser set it for FormData
           const response = await fetch(`${API_URL}/upload.php`, {
