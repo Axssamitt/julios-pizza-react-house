@@ -13,9 +13,12 @@ interface Usuario {
   id: string;
   email: string;
   nome: string;
+  tipo: 'admin' | 'user' | 'restrito' | null;
   ativo: boolean;
   created_at: string;
 }
+
+type TipoUsuario = 'admin' | 'user' | 'restrito';
 
 export const UserManager = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
@@ -25,12 +28,14 @@ export const UserManager = () => {
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
-    senha: ''
+    senha: '',
+    tipo: 'user' as TipoUsuario
   });
   const [editData, setEditData] = useState({
     nome: '',
     email: '',
-    senha: ''
+    senha: '',
+    tipo: 'user' as TipoUsuario
   });
   const { toast } = useToast();
 
@@ -42,7 +47,7 @@ export const UserManager = () => {
     try {
       const { data, error } = await supabase
         .from('usuarios')
-        .select('id, email, nome, ativo, created_at')
+        .select('id, email, nome, tipo, ativo, created_at')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -76,6 +81,7 @@ export const UserManager = () => {
           nome,
           email,
           senha,
+          tipo: formData.tipo,
           ativo: true
         });
 
@@ -86,7 +92,7 @@ export const UserManager = () => {
         description: "Usuário criado com sucesso!",
       });
       
-      setFormData({ nome: '', email: '', senha: '' });
+      setFormData({ nome: '', email: '', senha: '', tipo: 'user' });
       setDialogOpen(false);
       fetchUsuarios();
     } catch (error: unknown) {
@@ -105,7 +111,8 @@ export const UserManager = () => {
     setEditData({
       nome: usuario.nome,
       email: usuario.email,
-      senha: ''
+      senha: '',
+      tipo: usuario.tipo === 'admin' || usuario.tipo === 'restrito' ? usuario.tipo : 'user'
     });
   };
 
@@ -119,9 +126,10 @@ export const UserManager = () => {
         throw new Error('Nome e email são obrigatórios.');
       }
 
-      const updateData: { nome: string; email: string; senha?: string } = {
+      const updateData: { nome: string; email: string; tipo: TipoUsuario; senha?: string } = {
         nome,
-        email
+        email,
+        tipo: editData.tipo
       };
 
       if (senha) {
@@ -141,7 +149,7 @@ export const UserManager = () => {
       });
       
       setEditingId(null);
-      setEditData({ nome: '', email: '', senha: '' });
+      setEditData({ nome: '', email: '', senha: '', tipo: 'user' });
       fetchUsuarios();
     } catch (error: unknown) {
       console.error('Erro ao atualizar usuário:', error);
@@ -243,6 +251,18 @@ export const UserManager = () => {
                     className="bg-gray-700/50 border-gray-600 text-white"
                   />
                 </div>
+                <div>
+                  <label className="text-gray-300 text-sm">Tipo de usuário</label>
+                  <select
+                    value={formData.tipo}
+                    onChange={(e) => setFormData(prev => ({ ...prev, tipo: e.target.value as TipoUsuario }))}
+                    className="w-full bg-gray-700/50 border border-gray-600 rounded-md px-3 py-2 text-white"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="user">Usuário</option>
+                    <option value="restrito">Restrito</option>
+                  </select>
+                </div>
                 <div className="flex gap-2">
                   <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
                     Criar Usuário
@@ -281,6 +301,15 @@ export const UserManager = () => {
                       placeholder="Email"
                       className="bg-gray-600/50 border-gray-500 text-white"
                     />
+                    <select
+                      value={editData.tipo}
+                      onChange={(e) => setEditData(prev => ({ ...prev, tipo: e.target.value as TipoUsuario }))}
+                      className="bg-gray-600/50 border border-gray-500 rounded-md px-3 py-2 text-white"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="user">Usuário</option>
+                      <option value="restrito">Restrito</option>
+                    </select>
                   </div>
                   <Input
                     type="password"
@@ -316,6 +345,7 @@ export const UserManager = () => {
                     <div>
                       <h3 className="text-white font-medium">{usuario.nome}</h3>
                       <p className="text-gray-400 text-sm">{usuario.email}</p>
+                      <p className="text-gray-400 text-sm">Tipo: {usuario.tipo || 'user'}</p>
                       <p className="text-gray-400 text-sm">Criado em: {formatDate(usuario.created_at)}</p>
                       <Badge className={usuario.ativo ? "bg-green-600 text-white mt-1" : "bg-red-600 text-white mt-1"}>
                         {usuario.ativo ? 'Ativo' : 'Inativo'}

@@ -132,25 +132,19 @@ export const FormularioManager = () => {
     return timeStr.substring(0, 5);
   };
 
-  const normalizarTexto = (value: string) => value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim();
-
   const formulariosFiltrados = formularios
     .filter((formulario) => {
-      const termo = normalizarTexto(searchTerm);
-      const correspondeNome = !termo || normalizarTexto(formulario.nome_completo).includes(termo);
-      const documento = formulario.cpf.replace(/\D/g, '');
-      const termoDocumento = searchTerm.replace(/\D/g, '');
-      const correspondeDocumento = !termoDocumento || documento.includes(termoDocumento);
-      const dataEvento = formulario.data_evento.split('T')[0];
-      const correspondeData = !searchDate || dataEvento === searchDate;
+      const termo = searchTerm.trim().toLowerCase();
+      const termoLimpo = termo.replace(/\D/g, '');
+      const termoBusca = termoLimpo.length >= 3 ? termoLimpo : termo;
+      const nomeDocumento = `${formulario.nome_completo} ${formulario.cpf.replace(/\D/g, '')}`.toLowerCase();
 
-      return (!termo || correspondeNome || correspondeDocumento) && correspondeData;
+      const correspondeNomeDocumento = !termoBusca || nomeDocumento.includes(termoBusca);
+      const correspondeData = !searchDate || formulario.data_evento === searchDate;
+
+      return correspondeNomeDocumento && correspondeData;
     })
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    .sort((a, b) => new Date(b.data_evento).getTime() - new Date(a.data_evento).getTime());
 
   // Obter datas únicas dos formulários para destacar no calendário
   const datasComRegistros = [...new Set(formularios.map(f => f.data_evento))];

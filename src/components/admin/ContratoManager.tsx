@@ -238,7 +238,7 @@ export const ContratoManager = () => {
     const { data, error } = await supabase
       .from('formularios_contato')
       .select('*')
-      .order('data_evento', { ascending: true });
+      .order('data_evento', { ascending: false });
 
     if (!error && data) {
       const confirmados = data.filter((formulario) =>
@@ -297,7 +297,7 @@ export const ContratoManager = () => {
     const correspondeData = !searchDate || formulario.data_evento === searchDate;
 
     return correspondeNomeDocumento && correspondeData;
-  });
+  }).sort((a, b) => new Date(b.data_evento).getTime() - new Date(a.data_evento).getTime());
 
   const datasComRegistros = [...new Set(formularios.map((formulario) => formulario.data_evento))];
 
