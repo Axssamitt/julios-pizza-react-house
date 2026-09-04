@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 import { Plus, Trash2, Shield, Edit, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,7 +40,7 @@ export const UserManager = () => {
 
   const fetchUsuarios = async () => {
     try {
-      const { data, error } = await db
+      const { data, error } = await supabase
         .from('usuarios')
         .select('id, email, nome, ativo, created_at')
         .order('created_at', { ascending: false });
@@ -70,7 +70,7 @@ export const UserManager = () => {
         throw new Error('Nome, email e senha são obrigatórios.');
       }
 
-      const { error } = await db
+      const { error } = await supabase
         .from('usuarios')
         .insert({
           nome,
@@ -128,7 +128,7 @@ export const UserManager = () => {
         updateData.senha = senha;
       }
 
-      const { error } = await db
+      const { error } = await supabase
         .from('usuarios')
         .update(updateData)
         .eq('id', id);
@@ -158,7 +158,7 @@ export const UserManager = () => {
     if (!confirm('Tem certeza que deseja remover este usuário?')) return;
 
     try {
-      const { error } = await db
+      const { error } = await supabase
         .from('usuarios')
         .delete()
         .eq('id', id);

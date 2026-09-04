@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 import { FileText, Download, Plus, Trash2, Calendar, Calculator } from 'lucide-react';
 import { numberToWordsBrazilian } from '@/utils/supabaseStorage';
 import { jsPDF } from 'jspdf';
@@ -83,7 +83,7 @@ export const ContratoManager = () => {
   }, [selectedFormulario, configs]);
 
   const fetchItensAdicionais = async (formularioId: string) => {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('contrato_itens_adicionais')
       .select('*')
       .eq('formulario_id', formularioId)
@@ -100,7 +100,7 @@ export const ContratoManager = () => {
   };
 
   const fetchParcelas = async (formularioId: string) => {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('contrato_parcelamentos')
       .select('*')
       .eq('formulario_id', formularioId)
@@ -120,7 +120,7 @@ export const ContratoManager = () => {
   const salvarItemAdicional = async () => {
     if (!selectedFormulario || !novoItem.descricao || novoItem.valor === 0) return;
 
-    const { error } = await db
+    const { error } = await supabase
       .from('contrato_itens_adicionais')
       .insert({
         formulario_id: selectedFormulario.id,
@@ -136,7 +136,7 @@ export const ContratoManager = () => {
   };
 
   const removerItemAdicional = async (itemId: string) => {
-    const { error } = await db
+    const { error } = await supabase
       .from('contrato_itens_adicionais')
       .delete()
       .eq('id', itemId);
@@ -175,13 +175,13 @@ export const ContratoManager = () => {
     if (!selectedFormulario || parcelas.length === 0) return;
 
     // Deletar parcelas existentes
-    await db
+    await supabase
       .from('contrato_parcelamentos')
       .delete()
       .eq('formulario_id', selectedFormulario.id);
 
     // Inserir novas parcelas
-    const { error } = await db
+    const { error } = await supabase
       .from('contrato_parcelamentos')
       .insert(
         parcelas.map(parcela => ({
@@ -211,10 +211,11 @@ export const ContratoManager = () => {
       return;
     }
 
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('formularios_contato')
       .update({ valor_entrada: novoValorEntrada })
-      .eq('id', selectedFormulario.id);
+      .eq('id', selectedFormulario.id)
+      .select();
 
     if (error) {
       console.error('Erro ao salvar valor da entrada:', error);
@@ -231,19 +232,23 @@ export const ContratoManager = () => {
   };
 
   const fetchFormularios = async () => {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('formularios_contato')
       .select('*')
       .order('data_evento', { ascending: true });
 
     if (!error && data) {
-      const confirmados = data.filter((formulario) => String(formulario.status || '').toLowerCase() === 'confirmado');
+      const confirmados = data.filter((formulario) =>
+        String(formulario.status || '').trim().toLowerCase() === 'confirmado'
+      );
       setFormularios(confirmados);
+    } else if (error) {
+      console.error('Erro ao carregar formulários confirmados:', error);
     }
   };
 
   const fetchConfigs = async () => {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('configuracoes')
       .select('chave, valor')
       .eq('ativo', true);

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Users, Award, Heart, Star } from 'lucide-react';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AboutConfig {
   texto_sobre: string;
@@ -25,7 +25,7 @@ Faça o seu rodízio de pizzas sem sair do conforto de sua casa com Julio House 
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const { data, error } = await db
+        const { data, error } = await supabase
           .from('home_config')
           .select('texto_sobre, visivel_sobre')
           .limit(1)

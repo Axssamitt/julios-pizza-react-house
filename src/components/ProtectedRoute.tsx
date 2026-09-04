@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,13 +12,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await db.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       setIsAuthenticated(!!session);
     };
 
     checkAuth();
 
-    const { data: { subscription } } = db.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
     });
 

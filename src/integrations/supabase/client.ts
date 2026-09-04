@@ -1,1 +1,1 @@
-export { db, supabase } from '../api/client';
+export { supabase } from '../api/client';

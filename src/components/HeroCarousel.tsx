@@ -2,7 +2,7 @@ import React from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Autoplay from 'embla-carousel-autoplay';
 import { Card, CardContent } from '@/components/ui/card';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 
 interface CarouselImage {
@@ -14,7 +14,7 @@ interface CarouselImage {
 }
 
 const fetchCarouselImages = async (): Promise<CarouselImage[]> => {
-  const { data, error } = await db
+  const { data, error } = await supabase
     .from('carousel_images')
     .select('*')
     .eq('ativo', true)

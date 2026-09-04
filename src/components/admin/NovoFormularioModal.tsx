@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CalendarDays, Clock, Users, MapPin, Phone, User, Plus } from 'lucide-react';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface NovoFormularioModalProps {
@@ -24,7 +24,7 @@ export const NovoFormularioModal = ({ onFormularioAdicionado }: NovoFormularioMo
     endereco_evento: '',
     data_evento: '',
     horario: '',
-    quantidade_adultos: 1,
+    quantidade_adultos: 25,
     quantidade_criancas: 0,
     telefone: '',
     observacoes: ''
@@ -35,9 +35,9 @@ export const NovoFormularioModal = ({ onFormularioAdicionado }: NovoFormularioMo
     setLoading(true);
 
     try {
-      const { error } = await db
+      const { error } = await supabase
         .from('formularios_contato')
-        .insert([formData]);
+        .insert([{ ...formData, cpf: formData.cpf.replace(/\D/g, '') }]);
 
       if (error) throw error;
 

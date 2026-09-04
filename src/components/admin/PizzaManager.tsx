@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 import { Eye, Edit, Trash2, Plus, Upload } from 'lucide-react';
 import { PizzaEditForm } from './PizzaEditForm';
 
@@ -41,7 +41,7 @@ export const PizzaManager = () => {
   }, []);
 
   const fetchPizzas = async () => {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('pizzas')
       .select('*')
       .order('ordem', { ascending: true });
@@ -61,13 +61,13 @@ export const PizzaManager = () => {
       const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
       const bucket = 'pizzas';
 
-      const { error: uploadError } = await db.storage
+      const { error: uploadError } = await supabase.storage
         .from(bucket)
         .upload(fileName, file);
 
       if (uploadError) throw uploadError;
 
-      const { data } = db.storage
+      const { data } = supabase.storage
         .from(bucket)
         .getPublicUrl(fileName);
 
@@ -85,7 +85,7 @@ export const PizzaManager = () => {
 
   const createPizza = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await db
+    const { error } = await supabase
       .from('pizzas')
       .insert([newPizza]);
 
@@ -97,7 +97,7 @@ export const PizzaManager = () => {
   };
 
   const updatePizza = async (id: string, updates: Partial<Pizza>) => {
-    const { error } = await db
+    const { error } = await supabase
       .from('pizzas')
       .update(updates)
       .eq('id', id);
@@ -110,7 +110,7 @@ export const PizzaManager = () => {
   };
 
   const deletePizza = async (id: string) => {
-    const { error } = await db
+    const { error } = await supabase
       .from('pizzas')
       .delete()
       .eq('id', id);

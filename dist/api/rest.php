@@ -31,9 +31,18 @@ switch ($method) {
         foreach ($_GET as $key => $value) {
             if (!in_array($key, ['table', 'id', 'select', 'order', 'limit', 'offset'])) {
                 // Only allow filtering by alphanumeric keys to prevent injection
-                if (preg_match('/^[a-zA-Z0-9_]+$/', $key)) {
-                    $where[] = "$key = ?";
-                    $params[] = $value;
+                if (str_starts_with($key, 'gte_')) {
+                    $field = substr($key, 4);
+                    if (preg_match('/^[a-zA-Z0-9_]+$/', $field)) {
+                        $where[] = "`$field` >= ?";
+                        $params[] = $value;
+                    }
+                } elseif (preg_match('/^[a-zA-Z0-9_]+$/', $key)) {
+                    $where[] = "`$key` = ?";
+                    $normalized_value = strtolower((string) $value);
+                    $params[] = $normalized_value === 'true' ? 1 : (
+                        $normalized_value === 'false' ? 0 : $value
+                    );
                 }
             }
         }

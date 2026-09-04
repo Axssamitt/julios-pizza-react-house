@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Utensils } from 'lucide-react';
 import { HeroCarousel } from './HeroCarousel';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface HomeConfig {
   titulo_hero: string;
@@ -22,7 +22,7 @@ export const Hero = () => {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const { data, error } = await db
+        const { data, error } = await supabase
           .from('home_config')
           .select('titulo_hero, subtitulo_hero, align_titulo_hero, align_subtitulo_hero')
           .limit(1)

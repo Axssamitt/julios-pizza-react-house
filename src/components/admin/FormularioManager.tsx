@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 import { Eye, Trash2, Calendar, Clock, Users, Phone, MapPin } from 'lucide-react';
 import { CalendarWithHighlight } from './CalendarWithHighlight';
 import { NovoFormularioModal } from './NovoFormularioModal';
+import { useToast } from '@/hooks/use-toast';
 
 interface Formulario {
   id: string;
@@ -24,6 +25,7 @@ interface Formulario {
 }
 
 export const FormularioManager = () => {
+  const { toast } = useToast();
   const [formularios, setFormularios] = useState<Formulario[]>([]);
   const [selectedFormulario, setSelectedFormulario] = useState<Formulario | null>(null);
 
@@ -40,7 +42,7 @@ export const FormularioManager = () => {
   }, []);
 
   const fetchFormularios = async () => {
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from('formularios_contato')
       .select('*')
       .order('created_at', { ascending: false });
@@ -51,18 +53,26 @@ export const FormularioManager = () => {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    const { error } = await db
+    const { error } = await supabase
       .from('formularios_contato')
       .update({ status })
       .eq('id', id);
 
     if (!error) {
       fetchFormularios();
+      setSelectedFormulario((current) => current?.id === id ? { ...current, status } : current);
+    } else {
+      console.error('Erro ao atualizar status:', error);
+      toast({
+        title: 'Erro ao atualizar formulário',
+        description: 'O status não foi alterado. Verifique o banco de dados e tente novamente.',
+        variant: 'destructive',
+      });
     }
   };
 
   const deleteFormulario = async (id: string) => {
-    const { error } = await db
+    const { error } = await supabase
       .from('formularios_contato')
       .delete()
       .eq('id', id);
@@ -76,7 +86,7 @@ export const FormularioManager = () => {
   const salvarEdicao = async () => {
     if (!editData) return;
     const { id, ...dadosParaAtualizar } = editData;
-    const { error } = await db
+    const { error } = await supabase
       .from('formularios_contato')
       .update(dadosParaAtualizar)
       .eq('id', id);

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 import { Plus, Edit, Trash2, Image, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -38,7 +38,7 @@ export const CarouselManager = () => {
 
   const fetchImages = async () => {
     try {
-      const { data, error } = await db
+      const { data, error } = await supabase
         .from('carousel_images')
         .select('*')
         .order('ordem');
@@ -62,7 +62,7 @@ export const CarouselManager = () => {
     const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
     const bucket = 'carousel';
 
-    const { error: uploadError } = await db.storage
+    const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(fileName, file);
 
@@ -70,7 +70,7 @@ export const CarouselManager = () => {
       throw uploadError;
     }
 
-    const { data } = db.storage
+    const { data } = supabase.storage
       .from(bucket)
       .getPublicUrl(fileName);
 
@@ -107,7 +107,7 @@ export const CarouselManager = () => {
       const nextOrder = Math.max(...images.map(img => img.ordem), 0) + 1;
       
       if (editingImage) {
-        const { error } = await db
+        const { error } = await supabase
           .from('carousel_images')
           .update({
             titulo: formData.titulo,
@@ -122,7 +122,7 @@ export const CarouselManager = () => {
           description: "Imagem atualizada com sucesso!",
         });
       } else {
-        const { error } = await db
+        const { error } = await supabase
           .from('carousel_images')
           .insert({
             titulo: formData.titulo,
@@ -156,7 +156,7 @@ export const CarouselManager = () => {
     if (!confirm('Tem certeza que deseja excluir esta imagem?')) return;
 
     try {
-      const { error } = await db
+      const { error } = await supabase
         .from('carousel_images')
         .delete()
         .eq('id', id);
@@ -179,7 +179,7 @@ export const CarouselManager = () => {
 
   const handleToggleActive = async (id: string, ativo: boolean) => {
     try {
-      const { error } = await db
+      const { error } = await supabase
         .from('carousel_images')
         .update({ ativo: !ativo })
         .eq('id', id);

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Facebook, Instagram, Phone, MapPin, MessageCircle } from 'lucide-react';
-import { db } from '@/integrations/api/client';
+import { supabase } from '@/integrations/supabase/client';
 import { formatPhoneBrazil } from '@/utils/supabaseStorage';
 
 interface FooterConfig {
@@ -40,7 +40,7 @@ export const Footer = () => {
   const fetchConfigurations = async () => {
     try {
       // Buscar configuração do WhatsApp
-      const { data: whatsappData, error: whatsappError } = await db
+      const { data: whatsappData, error: whatsappError } = await supabase
         .from('configuracoes')
         .select('valor')
         .eq('chave', 'whatsapp_numero')
@@ -51,7 +51,7 @@ export const Footer = () => {
       }
 
       // Buscar configurações do footer
-      const { data: footerData, error: footerError } = await db
+      const { data: footerData, error: footerError } = await supabase
         .from('home_config')
         .select('nome_empresa, visivel_nome_empresa, endereco, visivel_endereco, telefone, visivel_telefone, facebook_url, visivel_facebook, instagram_url, visivel_instagram')
         .single();
