@@ -4,6 +4,7 @@ import Autoplay from 'embla-carousel-autoplay';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { resolveImageUrl } from '@/utils/imageUpload';
 
 interface CarouselImage {
   id: string;
@@ -77,7 +78,7 @@ export const HeroCarousel = () => {
         {images.map((image) => (
           <div key={image.id} className="flex-[0_0_100%] min-w-0 relative">
             <img
-              src={image.url_imagem}
+              src={resolveImageUrl(image.url_imagem, 'carousel')}
               alt={image.titulo}
               className="w-full h-full object-cover"
               loading="lazy"

@@ -203,6 +203,8 @@ export type Database = {
           status: string
           telefone: string
           updated_at: string
+          valor_adulto: number | null
+          valor_crianca: number | null
           valor_entrada: number | null
           valor_total: number | null
         }
@@ -221,6 +223,8 @@ export type Database = {
           status?: string
           telefone: string
           updated_at?: string
+          valor_adulto?: number | null
+          valor_crianca?: number | null
           valor_entrada?: number | null
           valor_total?: number | null
         }
@@ -239,6 +243,8 @@ export type Database = {
           status?: string
           telefone?: string
           updated_at?: string
+          valor_adulto?: number | null
+          valor_crianca?: number | null
           valor_entrada?: number | null
           valor_total?: number | null
         }

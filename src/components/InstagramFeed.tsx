@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Instagram, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveImageUrl } from '@/utils/imageUpload';
 
 interface InstagramPost {
   id: string;
@@ -96,7 +97,7 @@ export const InstagramFeed = () => {
             <div key={post.id} className="bg-gray-900 rounded-lg overflow-hidden shadow-xl group hover:transform hover:scale-105 transition-all duration-300">
               <div className="relative">
                 <img 
-                  src={post.url_imagem} 
+                  src={resolveImageUrl(post.url_imagem, 'instagram')} 
                   alt={post.titulo}
                   className="w-full h-64 object-cover"
                 />

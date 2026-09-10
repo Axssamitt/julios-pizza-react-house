@@ -264,8 +264,8 @@ class SupabaseEmulator {
       getPublicUrl: (path: string) => {
         const normalizedPath = String(path || '').replace(/^\/+/, '');
         const publicUrl = typeof window !== 'undefined' && window.location?.origin
-          ? new URL(`/uploads/${normalizedPath}`, window.location.origin).toString()
-          : `/uploads/${normalizedPath}`;
+          ? new URL(`/uploads/${bucket}/${normalizedPath}`, window.location.origin).toString()
+          : `/uploads/${bucket}/${normalizedPath}`;
 
         return { data: { publicUrl } };
       }

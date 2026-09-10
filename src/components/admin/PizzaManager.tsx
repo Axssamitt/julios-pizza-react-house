@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveImageUrl } from '@/utils/imageUpload';
 import { Eye, Edit, Trash2, Plus, Upload } from 'lucide-react';
 import { PizzaEditForm } from './PizzaEditForm';
 
@@ -300,7 +301,7 @@ export const PizzaManager = () => {
                {selectedPizza.imagem_url && (
                 <div>
                   <label className="text-gray-400 text-sm">Imagem</label>
-                  <img src={selectedPizza.imagem_url} alt={selectedPizza.nome} className="w-32 h-32 object-cover rounded" />
+                  <img src={resolveImageUrl(selectedPizza.imagem_url, 'pizzas')} alt={selectedPizza.nome} className="w-32 h-32 object-cover rounded" />
                 </div>
               )}
               <div>

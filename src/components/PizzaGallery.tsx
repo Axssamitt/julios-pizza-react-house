@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { resolveImageUrl } from '@/utils/imageUpload';
 
 interface Pizza {
   id: string;
@@ -65,7 +66,7 @@ export const PizzaGallery = () => {
     <div className="bg-gray-800 rounded-lg overflow-hidden shadow-xl hover:transform hover:scale-105 transition-all duration-300">
       <div className="relative h-64">
         <img 
-          src={pizza.imagem_url || 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=400&fit=crop'} 
+          src={resolveImageUrl(pizza.imagem_url, 'pizzas') || 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400&h=400&fit=crop'} 
           alt={pizza.nome}
           className="w-full h-full object-cover"
         />

@@ -24,6 +24,8 @@ interface Formulario {
   status: string;
   created_at: string;
   valor_entrada?: number | null;
+  valor_adulto?: number | null;
+  valor_crianca?: number | null;
 }
 
 interface ItemAdicional {
@@ -70,6 +72,8 @@ export const ContratoManager = () => {
   const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [novoItem, setNovoItem] = useState<ItemAdicional>({ descricao: '', valor: '', quantidade: 1 });
   const [valorEntradaEditavel, setValorEntradaEditavel] = useState<number | string>('');
+  const [valorAdultoEditavel, setValorAdultoEditavel] = useState<number | string>('');
+  const [valorCriancaEditavel, setValorCriancaEditavel] = useState<number | string>('');
   const [numeroParcelas, setNumeroParcelas] = useState<number>(1);
   const [primeiraParcela, setPrimeiraParcela] = useState<string>('');
   const [showParcelamento, setShowParcelamento] = useState<boolean>(false);
@@ -87,12 +91,26 @@ export const ContratoManager = () => {
           const valorTotal = calcularValorTotal(
             selectedFormulario.quantidade_adultos,
             selectedFormulario.quantidade_criancas,
-            itens
+            itens,
+            {
+              adulto: selectedFormulario.valor_adulto ?? toNumber(configs.valor_adulto, 55),
+              crianca: selectedFormulario.valor_crianca ?? toNumber(configs.valor_crianca, 27)
+            }
           );
           setValorEntradaEditavel(calcularEntrada(valorTotal).toFixed(2));
         }
       });
       fetchParcelas(selectedFormulario.id);
+      setValorAdultoEditavel(
+        selectedFormulario.valor_adulto === null || selectedFormulario.valor_adulto === undefined
+          ? toNumber(configs.valor_adulto, 55).toFixed(2)
+          : toNumber(selectedFormulario.valor_adulto).toFixed(2)
+      );
+      setValorCriancaEditavel(
+        selectedFormulario.valor_crianca === null || selectedFormulario.valor_crianca === undefined
+          ? toNumber(configs.valor_crianca, 27).toFixed(2)
+          : toNumber(selectedFormulario.valor_crianca).toFixed(2)
+      );
       if (selectedFormulario.valor_entrada !== null && selectedFormulario.valor_entrada !== undefined) {
         setValorEntradaEditavel(Number(selectedFormulario.valor_entrada).toFixed(2));
       } else {
@@ -102,6 +120,8 @@ export const ContratoManager = () => {
       setValorEntradaEditavel('');
       setItensAdicionais([]);
       setParcelas([]);
+      setValorAdultoEditavel('');
+      setValorCriancaEditavel('');
     }
   }, [selectedFormulario, configs]);
 
@@ -140,7 +160,26 @@ export const ContratoManager = () => {
         data_vencimento: parcela.data_vencimento,
         status: parcela.status
       })));
+    } else if (error) {
+      console.error('Erro ao carregar parcelas:', error);
+      setParcelas([]);
     }
+  };
+
+  const selecionarFormulario = async (formulario: Formulario) => {
+    if (selectedFormulario?.id === formulario.id) {
+      setSelectedFormulario(null);
+      return;
+    }
+
+    setSelectedFormulario(formulario);
+    setShowParcelamento(false);
+    setContratoGerado('');
+    setReciboGerado('');
+    await Promise.all([
+      fetchItensAdicionais(formulario.id),
+      fetchParcelas(formulario.id)
+    ]);
   };
 
   const salvarItemAdicional = async () => {
@@ -176,7 +215,10 @@ export const ContratoManager = () => {
   const gerarParcelas = () => {
     if (!selectedFormulario || !primeiraParcela || numeroParcelas < 1) return;
 
-    const valorTotal = calcularValorTotal(selectedFormulario.quantidade_adultos, selectedFormulario.quantidade_criancas, itensAdicionais);
+    const valorTotal = calcularValorTotal(selectedFormulario.quantidade_adultos, selectedFormulario.quantidade_criancas, itensAdicionais, {
+      adulto: toNumber(valorAdultoEditavel, toNumber(configs.valor_adulto, 55)),
+      crianca: toNumber(valorCriancaEditavel, toNumber(configs.valor_crianca, 27))
+    });
     const entrada = toNumber(valorEntradaEditavel);
     const saldoRestante = valorTotal - entrada;
     const valorParcela = saldoRestante / numeroParcelas;
@@ -197,14 +239,27 @@ export const ContratoManager = () => {
     setParcelas(novasParcelas);
   };
 
+  const alternarParcelamento = () => {
+    if (!showParcelamento && parcelas.length > 0) {
+      setNumeroParcelas(parcelas.length);
+      setPrimeiraParcela(parcelas[0].data_vencimento);
+    }
+    setShowParcelamento(prev => !prev);
+  };
+
   const salvarParcelas = async () => {
     if (!selectedFormulario || parcelas.length === 0) return;
 
     // Deletar parcelas existentes
-    await supabase
+    const { error: deleteError } = await supabase
       .from('contrato_parcelamentos')
       .delete()
       .eq('formulario_id', selectedFormulario.id);
+
+    if (deleteError) {
+      console.error('Erro ao remover parcelas anteriores:', deleteError);
+      return;
+    }
 
     // Inserir novas parcelas
     const { error } = await supabase
@@ -222,7 +277,36 @@ export const ContratoManager = () => {
     if (!error) {
       await fetchParcelas(selectedFormulario.id);
       setShowParcelamento(false);
+    } else {
+      console.error('Erro ao salvar parcelas:', error);
     }
+  };
+
+  const handleSalvarValoresContrato = async () => {
+    if (!selectedFormulario) return;
+
+    const valorAdulto = toNumber(valorAdultoEditavel, NaN);
+    const valorCrianca = toNumber(valorCriancaEditavel, NaN);
+    if (!Number.isFinite(valorAdulto) || valorAdulto < 0 || !Number.isFinite(valorCrianca) || valorCrianca < 0) {
+      console.error('Valores de adulto ou criança inválidos.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('formularios_contato')
+      .update({ valor_adulto: valorAdulto, valor_crianca: valorCrianca })
+      .eq('id', selectedFormulario.id);
+
+    if (error) {
+      console.error('Erro ao salvar valores do contrato:', error);
+      return;
+    }
+
+    const atualizarFormulario = (formulario: Formulario) => formulario.id === selectedFormulario.id
+      ? { ...formulario, valor_adulto: valorAdulto, valor_crianca: valorCrianca }
+      : formulario;
+    setFormularios(prev => prev.map(atualizarFormulario));
+    setSelectedFormulario(prev => prev ? atualizarFormulario(prev) : prev);
   };
 
   const handleSalvarValorEntrada = async () => {
@@ -331,9 +415,14 @@ export const ContratoManager = () => {
 
   const datasComRegistros = [...new Set(formularios.map((formulario) => formulario.data_evento))];
 
-  const calcularValorTotal = (adultos: number, criancas: number, itensAdicionais: ItemAdicional[] = []) => {
-    const valorAdulto = toNumber(configs.valor_adulto, 55);
-    const valorCrianca = toNumber(configs.valor_crianca, 27);
+  const calcularValorTotal = (
+    adultos: number,
+    criancas: number,
+    itensAdicionais: ItemAdicional[] = [],
+    valores?: { adulto: number; crianca: number }
+  ) => {
+    const valorAdulto = valores?.adulto ?? toNumber(configs.valor_adulto, 55);
+    const valorCrianca = valores?.crianca ?? toNumber(configs.valor_crianca, 27);
     const valorBase = (adultos * valorAdulto) + (criancas * valorCrianca);
     const valorItens = itensAdicionais.reduce((acc, item) => acc + (Number(item.valor) * item.quantidade), 0);
     return valorBase + valorItens;
@@ -342,6 +431,18 @@ export const ContratoManager = () => {
   const calcularEntrada = (valorTotal: number) => {
     const percentualEntrada = toNumber(configs.percentual_entrada, 40) / 100;
     return valorTotal * percentualEntrada;
+  };
+
+  const obterValoresContrato = (formulario?: Formulario) => {
+    const contratoSelecionado = formulario && selectedFormulario?.id === formulario.id;
+    return {
+      adulto: contratoSelecionado
+        ? toNumber(valorAdultoEditavel, toNumber(configs.valor_adulto, 55))
+        : toNumber(formulario?.valor_adulto, toNumber(configs.valor_adulto, 55)),
+      crianca: contratoSelecionado
+        ? toNumber(valorCriancaEditavel, toNumber(configs.valor_crianca, 27))
+        : toNumber(formulario?.valor_crianca, toNumber(configs.valor_crianca, 27))
+    };
   };
 
   const obterValorEntrada = (formulario: Formulario, valorTotal: number) => {
@@ -356,12 +457,12 @@ export const ContratoManager = () => {
   };
 
   const gerarContrato = (formulario: Formulario, itens: ItemAdicional[] = itensAdicionais) => {
-    const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itens);
+    const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itens, obterValoresContrato(formulario));
     const entrada = obterValorEntrada(formulario, valorTotal);
 
     const restante = valorTotal - entrada;
-    const valorAdulto = toNumber(configs.valor_adulto, 55);
-    const valorCrianca = toNumber(configs.valor_crianca, 27);
+    const valorAdulto = toNumber(valorAdultoEditavel, toNumber(configs.valor_adulto, 55));
+    const valorCrianca = toNumber(valorCriancaEditavel, toNumber(configs.valor_crianca, 27));
     const percentualEntradaReal = calcularPercentualEntrada(entrada, valorTotal);
 
     let itensTexto = '';
@@ -471,7 +572,7 @@ CPF: 034.988.389-03
   };
 
   const gerarRecibo = (formulario: Formulario, itens: ItemAdicional[] = itensAdicionais) => {
-    const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itens);
+    const valorTotal = calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, itens, obterValoresContrato(formulario));
     const entradaRecibo = obterValorEntrada(formulario, valorTotal);
     
     const percentualEntradaReal = calcularPercentualEntrada(entradaRecibo, valorTotal);
@@ -640,7 +741,7 @@ const downloadPDF = (content: string, filename: string) => {
                     </div>
                     <div className="text-right">
                       <p className="text-orange-400 font-bold">
-                        R$ {calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, selectedFormulario?.id === formulario.id ? itensAdicionais : []).toFixed(2).replace('.', ',')}
+                        R$ {calcularValorTotal(formulario.quantidade_adultos, formulario.quantidade_criancas, selectedFormulario?.id === formulario.id ? itensAdicionais : [], obterValoresContrato(formulario)).toFixed(2).replace('.', ',')}
                       </p>
                       <p className="text-gray-400 text-sm">Total</p>
                     </div>
@@ -649,9 +750,7 @@ const downloadPDF = (content: string, filename: string) => {
                   <div className="flex flex-wrap gap-2 mt-4">
                     <Button 
                       size="sm" 
-                      onClick={() => {
-                        setSelectedFormulario(selectedFormulario?.id === formulario.id ? null : formulario);
-                      }}
+                      onClick={() => selecionarFormulario(formulario)}
                       className="bg-gray-600 hover:bg-gray-700"
                     >
                       {selectedFormulario?.id === formulario.id ? 'Fechar' : 'Configurar'}
@@ -693,6 +792,42 @@ const downloadPDF = (content: string, filename: string) => {
                     <CardTitle className="text-orange-400 text-lg">Configurações do Contrato</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {/* Valores do contrato */}
+                    <div>
+                      <h5 className="text-white font-medium mb-3">Valores por pessoa</h5>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-xs text-gray-300">Valor adulto (R$)</label>
+                          <Input
+                            type="number"
+                            value={valorAdultoEditavel}
+                            onChange={(e) => setValorAdultoEditavel(e.target.value)}
+                            step="0.01"
+                            min="0"
+                            className="bg-gray-600 border-gray-500 text-white text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-300">Valor criança (R$)</label>
+                          <Input
+                            type="number"
+                            value={valorCriancaEditavel}
+                            onChange={(e) => setValorCriancaEditavel(e.target.value)}
+                            step="0.01"
+                            min="0"
+                            className="bg-gray-600 border-gray-500 text-white text-sm"
+                          />
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={handleSalvarValoresContrato}
+                          className="bg-orange-600 hover:bg-orange-700 self-end"
+                        >
+                          Salvar valores
+                        </Button>
+                      </div>
+                    </div>
+
                     {/* Seção de itens adicionais */}
                     <div>
                       <h5 className="text-white font-medium mb-3 flex items-center">
@@ -785,7 +920,7 @@ const downloadPDF = (content: string, filename: string) => {
                         </h5>
                         <Button
                           size="sm"
-                          onClick={() => setShowParcelamento(!showParcelamento)}
+                          onClick={alternarParcelamento}
                           className="bg-purple-600 hover:bg-purple-700"
                         >
                           {showParcelamento ? 'Cancelar' : 'Configurar'}
@@ -823,16 +958,32 @@ const downloadPDF = (content: string, filename: string) => {
                           {parcelas.length > 0 && (
                             <div className="space-y-2">
                               <p className="text-sm text-gray-300">
-                                Saldo a parcelar: R$ {(calcularValorTotal(selectedFormulario.quantidade_adultos, selectedFormulario.quantidade_criancas, itensAdicionais) - toNumber(valorEntradaEditavel)).toFixed(2).replace('.', ',')}
+                                Saldo a parcelar: R$ {(calcularValorTotal(selectedFormulario.quantidade_adultos, selectedFormulario.quantidade_criancas, itensAdicionais, {
+                                  adulto: toNumber(valorAdultoEditavel, toNumber(configs.valor_adulto, 55)),
+                                  crianca: toNumber(valorCriancaEditavel, toNumber(configs.valor_crianca, 27))
+                                }) - toNumber(valorEntradaEditavel)).toFixed(2).replace('.', ',')}
                               </p>
                               {parcelas.map((parcela, index) => (
-                                <div key={index} className="flex justify-between items-center p-2 bg-gray-700/50 rounded text-sm">
-                                  <span className="text-white">
-                                    Parcela {parcela.numero_parcela}: R$ {parcela.valor_parcela.toFixed(2).replace('.', ',')}
-                                  </span>
-                                  <span className="text-gray-300">
-                                    {formatDate(parcela.data_vencimento)}
-                                  </span>
+                                <div key={parcela.id || index} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2 items-center p-2 bg-gray-700/50 rounded text-sm">
+                                  <span className="text-white">Parcela {parcela.numero_parcela}</span>
+                                  <Input
+                                    type="number"
+                                    value={parcela.valor_parcela}
+                                    onChange={(e) => setParcelas(prev => prev.map((item, itemIndex) => itemIndex === index
+                                      ? { ...item, valor_parcela: toNumber(e.target.value) }
+                                      : item))}
+                                    step="0.01"
+                                    min="0"
+                                    className="bg-gray-600 border-gray-500 text-white text-sm"
+                                  />
+                                  <Input
+                                    type="date"
+                                    value={parcela.data_vencimento}
+                                    onChange={(e) => setParcelas(prev => prev.map((item, itemIndex) => itemIndex === index
+                                      ? { ...item, data_vencimento: e.target.value }
+                                      : item))}
+                                    className="bg-gray-600 border-gray-500 text-white text-sm"
+                                  />
                                 </div>
                               ))}
                               <Button
@@ -852,10 +1003,11 @@ const downloadPDF = (content: string, filename: string) => {
                         <div className="space-y-2">
                           <p className="text-sm text-green-400 font-medium">Parcelamento Configurado:</p>
                           {parcelas.map((parcela, index) => (
-                            <div key={index} className="flex justify-between items-center p-2 bg-green-900/20 rounded text-sm">
+                            <div key={parcela.id || index} className="flex justify-between items-center p-2 bg-green-900/20 rounded text-sm">
                               <span className="text-white">
                                 Parcela {parcela.numero_parcela}: R$ {parcela.valor_parcela.toFixed(2).replace('.', ',')}
                               </span>
+                              <span className="text-gray-300">{formatDate(parcela.data_vencimento)}</span>
                               <Badge className={parcela.status === 'pago' ? 'bg-green-600' : 'bg-yellow-600'}>
                                 {parcela.status}
                               </Badge>

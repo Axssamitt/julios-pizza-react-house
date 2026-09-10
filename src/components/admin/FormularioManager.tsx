@@ -32,6 +32,7 @@ export const FormularioManager = () => {
   // Estados para filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [searchDate, setSearchDate] = useState('');
+  const [statusFiltro, setStatusFiltro] = useState<'todos' | 'pendente' | 'confirmado' | 'cancelado'>('todos');
 
   // Estados para edição
   const [editando, setEditando] = useState(false);
@@ -132,7 +133,7 @@ export const FormularioManager = () => {
     return timeStr.substring(0, 5);
   };
 
-  const formulariosFiltrados = formularios
+  const formulariosBase = formularios
     .filter((formulario) => {
       const termo = searchTerm.trim().toLowerCase();
       const termoLimpo = termo.replace(/\D/g, '');
@@ -145,6 +146,10 @@ export const FormularioManager = () => {
       return correspondeNomeDocumento && correspondeData;
     })
     .sort((a, b) => new Date(b.data_evento).getTime() - new Date(a.data_evento).getTime());
+
+  const formulariosFiltrados = formulariosBase.filter((formulario) =>
+    statusFiltro === 'todos' || formulario.status === statusFiltro
+  );
 
   // Obter datas únicas dos formulários para destacar no calendário
   const datasComRegistros = [...new Set(formularios.map(f => f.data_evento))];
@@ -186,10 +191,24 @@ export const FormularioManager = () => {
         </div>
       </div>
 
-      <div className="flex space-x-2">
-        <Badge className="bg-yellow-600">Pendente: {formulariosFiltrados.filter(f => f.status === 'pendente').length}</Badge>
-        <Badge className="bg-green-600">Confirmado: {formulariosFiltrados.filter(f => f.status === 'confirmado').length}</Badge>
-        <Badge className="bg-red-600">Cancelado: {formulariosFiltrados.filter(f => f.status === 'cancelado').length}</Badge>
+      <div className="flex flex-wrap gap-2">
+        {([
+          ['pendente', 'Pendente', 'bg-yellow-600'],
+          ['confirmado', 'Confirmado', 'bg-green-600'],
+          ['cancelado', 'Cancelado', 'bg-red-600']
+        ] as const).map(([status, label, color]) => (
+          <button
+            key={status}
+            type="button"
+            onClick={() => setStatusFiltro(statusFiltro === status ? 'todos' : status)}
+            className="focus:outline-none focus:ring-2 focus:ring-white/70 rounded"
+            aria-pressed={statusFiltro === status}
+          >
+            <Badge className={`${color} cursor-pointer ${statusFiltro === status ? 'ring-2 ring-white' : 'opacity-80 hover:opacity-100'}`}>
+              {label}: {formulariosBase.filter(f => f.status === status).length}
+            </Badge>
+          </button>
+        ))}
       </div>
 
       <div className="space-y-4">
