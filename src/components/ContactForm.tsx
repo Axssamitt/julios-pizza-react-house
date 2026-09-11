@@ -29,18 +29,33 @@ export const ContactForm = () => {
     setLoading(true);
 
     try {
-      // Inserir formulário no banco
-      const { error } = await supabase
-        .from('formularios_contato')
-        .insert([{ ...formData, cpf: formData.cpf.replace(/\D/g, '') }]);
+      // Salvar pelo endpoint PHP legado, que usa o INSERT parametrizado.
+      const formResponse = await fetch('./api/submit_contact.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          cpf: formData.cpf.replace(/\D/g, '')
+        })
+      });
+      if (!formResponse.ok) {
+        console.error('Erro ao salvar formulário:', await formResponse.text());
+        throw new Error('Não foi possível salvar o formulário');
+      }
 
-      if (error) throw error;
-
-      // Tentar enviar email de notificação (não falha se der erro)
+      // Tentar enviar email de notificação pelo backend PHP (não falha se der erro)
       try {
-        await supabase.functions.invoke('send-notification-email', {
-          body: formData
+        const emailResponse = await fetch('./api/send-notification.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...formData,
+            cpf: formData.cpf.replace(/\D/g, '')
+          })
         });
+        if (!emailResponse.ok) {
+          throw new Error('Falha ao enviar notificação por email');
+        }
       } catch (emailError) {
         console.log('Email não enviado:', emailError);
       }

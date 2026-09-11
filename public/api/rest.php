@@ -12,8 +12,12 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 // Public tables that can be read without authentication
 $public_tables = ['carousel_images', 'home_config', 'instagram_posts', 'pizzas'];
+$public_insert_tables = ['formularios_contato'];
 
-if ($method !== 'GET' || !in_array($table, $public_tables)) {
+if (
+    !($method === 'GET' && in_array($table, $public_tables, true)) &&
+    !($method === 'POST' && in_array($table, $public_insert_tables, true))
+) {
     if (!verifyToken()) {
         http_response_code(401);
         echo json_encode(['error' => 'Unauthorized']);

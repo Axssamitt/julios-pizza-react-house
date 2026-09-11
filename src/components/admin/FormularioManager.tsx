@@ -49,7 +49,10 @@ export const FormularioManager = () => {
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      setFormularios(data);
+      setFormularios(data.map((formulario) => ({
+        ...formulario,
+        status: formulario.status || 'pendente'
+      })));
     }
   };
 

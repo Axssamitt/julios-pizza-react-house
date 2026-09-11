@@ -46,6 +46,14 @@ Crie `public_html/uploads/` com chmod 755 (usada pelo `upload.php`).
 </Files>
 ```
 
+- O envio de orçamento usa `api/send-notification.php` e lê a chave pela
+  variável de ambiente `RESEND_API_KEY`. Não coloque a chave no Git ou em
+  arquivos dentro de `public_html`.
+- A propriedade `resend_from` precisa usar um remetente ou domínio verificado
+  no Resend. `onboarding@resend.dev` serve apenas para testes restritos.
+- Como a chave foi compartilhada fora do servidor, revogue-a no Resend e gere
+  outra antes da publicação. Configure-a como `RESEND_API_KEY` no HostGator.
+
 - Troque a senha do admin por um hash bcrypt. Gere no servidor:
 
 ```php
