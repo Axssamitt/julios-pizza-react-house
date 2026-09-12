@@ -77,7 +77,7 @@ export const ContratoManager = () => {
   const [numeroParcelas, setNumeroParcelas] = useState<number>(1);
   const [primeiraParcela, setPrimeiraParcela] = useState<string>('');
   const [showParcelamento, setShowParcelamento] = useState<boolean>(false);
-  const [clausulaCancelamentoOpcao, setClausulaCancelamentoOpcao] = useState<'padrao' | 'alternativa' | 'semDevolucao'>('padrao');
+  const [clausulaCancelamentoOpcao, setClausulaCancelamentoOpcao] = useState<'padrao' | 'alternativa' | 'semDevolucao'>('semDevolucao');
 
   useEffect(() => {
     fetchFormularios();
@@ -843,7 +843,8 @@ const downloadPDF = (content: string, filename: string) => {
                           className="bg-gray-600 border-gray-500 text-white text-sm"
                         />
                         <Input
-                          type="number"
+                          type="text"
+                          inputMode="text"
                           placeholder="Valor (negativo para desconto)"
                           value={novoItem.valor}
                           onChange={(e) => setNovoItem({...novoItem, valor: e.target.value})}
